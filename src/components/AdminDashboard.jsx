@@ -476,13 +476,19 @@ export default function AdminDashboard({
                     <tbody className="divide-y divide-stone-200">
                       {wholesaleUsers.map((user) => (
                         <tr key={user.id} className="hover:bg-stone-50">
-                          <td className="p-3 font-bold text-stone-900">
-                            {user.name}
+                          <td className="p-3">
+                            <span className="font-bold text-stone-900 block">{user.name}</span>
+                            {user.area && (
+                              <span className="text-[11px] text-stone-500 font-medium block">📍 {user.area}</span>
+                            )}
                           </td>
                           <td className="p-3 font-mono" dir="ltr">
-                            {user.phone}
+                            <span className="font-bold text-stone-800 block">{user.phone}</span>
+                            {user.username && (
+                              <span className="text-[10px] text-stone-400 font-sans block">اسم الدخول: {user.username}</span>
+                            )}
                           </td>
-                          <td className="p-3 font-mono text-stone-500" dir="ltr">
+                          <td className="p-3 font-mono font-bold text-emerald-800 bg-emerald-50/50 rounded" dir="ltr">
                             {user.password || '••••••'}
                           </td>
                           <td className="p-3 font-bold text-emerald-700">

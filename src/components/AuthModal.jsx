@@ -31,12 +31,19 @@ export default function AuthModal({
     e.preventDefault();
     setError('');
 
+    const cleanInput = phone.trim().toLowerCase();
+    const cleanPhone = phone.replace(/\s+/g, '');
+
     const user = wholesaleUsers.find(
-      (u) => (u.phone === phone.trim() || u.phone === phone.replace(/\s+/g, '')) && u.password === password
+      (u) =>
+        (u.phone === cleanInput ||
+          u.phone === cleanPhone ||
+          (u.username && u.username.toLowerCase() === cleanInput)) &&
+        u.password === password
     );
 
     if (!user) {
-      setError('رقم الموبايل أو كلمة المرور غير صحيحة');
+      setError('رقم الموبايل / اسم الحساب أو كلمة المرور غير صحيحة');
       return;
     }
 
@@ -49,6 +56,7 @@ export default function AuthModal({
       role: 'wholesale',
       id: user.id,
       name: user.name,
+      area: user.area,
       phone: user.phone,
       discountPct: user.discountPct || BUSINESS_INFO.defaultWholesaleDiscount
     });
@@ -130,13 +138,13 @@ export default function AuthModal({
             </div>
 
             <div>
-              <label className="block font-bold text-stone-700 mb-1">رقم الموبايل المسجل</label>
+              <label className="block font-bold text-stone-700 mb-1">رقم الموبايل أو اسم الحساب المسجل</label>
               <div className="relative">
                 <Phone className="w-4 h-4 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   required
-                  placeholder="مثال: 01234567890"
+                  placeholder="رقم الموبايل أو اسم الحساب (مثل karma أو mina)"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full pr-9 pl-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-brand-500"
@@ -159,12 +167,8 @@ export default function AuthModal({
               </div>
             </div>
 
-            <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-[11px] text-amber-800 leading-relaxed">
-              💡 حساب تجريبي معتمد: موبايل: <strong className="font-mono">01234567890</strong> | كلمة المرور: <strong className="font-mono">123</strong>
-              <br />
-              <span className="text-stone-500 text-[10px]">
-                * إذا كنت تاجر جملة أو كانتين جديد، يرجى التواصل مع إدارة بونابيتي لإنشاء حسابك وتحديد نسبة خصمك.
-              </span>
+            <div className="p-2.5 bg-stone-100 rounded-lg border border-stone-200 text-[11px] text-stone-600 leading-relaxed">
+              💡 <strong>تجار الجملة المعتمدين:</strong> يمكنكم تسجيل الدخول برقم الموبايل أو اسم الحساب وكلمة المرور المسلمة لكم من إدارة بونابيتي لتطبيق الخصم فوراً.
             </div>
 
             <button

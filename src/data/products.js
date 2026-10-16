@@ -18,9 +18,61 @@ export const BUSINESS_INFO = {
   defaultWholesaleUsers: [
     {
       id: "w1",
-      name: "كانتين مارمرقس (عميل جملة معتمد)",
-      phone: "01234567890",
-      password: "123",
+      name: "سوبر ماركت كارما - ك.مارمرقس",
+      area: "كليوباترا - مصر الجديدة",
+      phone: "01282199648",
+      username: "karma",
+      password: "karma123",
+      approved: true,
+      discountPct: 15
+    },
+    {
+      id: "w2",
+      name: "سوبر ماركت - ك.مارمينا المقر",
+      area: "زهراء - مصر القديمة",
+      phone: "01285275505",
+      username: "mina",
+      password: "mina123",
+      approved: true,
+      discountPct: 15
+    },
+    {
+      id: "w3",
+      name: "سوبر ماركت - ك.الانبا بولا",
+      area: "ارض الجولف - مدينة نصر",
+      phone: "01285275505",
+      username: "paula",
+      password: "paula123",
+      approved: true,
+      discountPct: 15
+    },
+    {
+      id: "w4",
+      name: "سوبر ماركت - ك.السيدة العذراء (الرحاب)",
+      area: "الرحاب - التجمع الاول",
+      phone: "01201162335",
+      username: "rehab",
+      password: "rehab123",
+      approved: true,
+      discountPct: 15
+    },
+    {
+      id: "w5",
+      name: "سوبر ماركت - ك.السيدة العذراء (القناطر)",
+      area: "القناطر الخيرية - القليوبية",
+      phone: "01207548666",
+      username: "qanater",
+      password: "qanater123",
+      approved: true,
+      discountPct: 15
+    },
+    {
+      id: "w6",
+      name: "سوبر ماركت - كوكو اوريجينال",
+      area: "مسرة - شبرا مصر",
+      phone: "01228502804",
+      username: "koko",
+      password: "koko123",
       approved: true,
       discountPct: 15
     }

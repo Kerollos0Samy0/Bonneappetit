@@ -45,8 +45,9 @@ export default function App() {
   // Wholesale Merchants List
   const [wholesaleUsers, setWholesaleUsers] = useState(() => {
     try {
-      const saved = localStorage.getItem('bonne_appetit_wholesale_users');
-      return saved ? JSON.parse(saved) : BUSINESS_INFO.defaultWholesaleUsers;
+      const saved = localStorage.getItem('bonne_appetit_wholesale_users_v3');
+      if (saved) return JSON.parse(saved);
+      return BUSINESS_INFO.defaultWholesaleUsers;
     } catch (e) {
       return BUSINESS_INFO.defaultWholesaleUsers;
     }
@@ -92,6 +93,7 @@ export default function App() {
 
   useEffect(() => {
     try {
+      localStorage.setItem('bonne_appetit_wholesale_users_v3', JSON.stringify(wholesaleUsers));
       localStorage.setItem('bonne_appetit_wholesale_users', JSON.stringify(wholesaleUsers));
     } catch (e) {}
   }, [wholesaleUsers]);
