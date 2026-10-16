@@ -14,7 +14,7 @@ export default function Footer({ onSelectCategory }) {
             <span className="text-xs text-stone-400 font-sans">{BUSINESS_INFO.name}</span>
           </div>
           <p className="text-stone-400 text-xs">
-            {BUSINESS_INFO.slogan} • إدارة: {BUSINESS_INFO.manager}
+            {BUSINESS_INFO.slogan}
           </p>
         </div>
 

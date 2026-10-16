@@ -2,7 +2,6 @@ export const BUSINESS_INFO = {
   name: "Bonne Appetit",
   nameAr: "بونابيتي",
   slogan: "أكلات بيتي وتجهيزات فاخرة جاهزة للتسوية الفورية",
-  manager: "م/ فاتن كمال",
   phone: "01055083061",
   phoneDisplay: "01055083061",
   whatsapp: "201055083061",
