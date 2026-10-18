@@ -1,15 +1,27 @@
 import React from 'react';
 import { CATEGORIES } from '../data/products';
+import { UI_TRANSLATIONS } from '../data/translations';
 
 export default function CategoryFilter({
   activeCategory,
-  onSelectCategory
+  onSelectCategory,
+  lang = 'ar',
+  t = UI_TRANSLATIONS.ar
 }) {
+  const getCatName = (cat) => {
+    if (lang === 'en') {
+      if (cat.id === 'all') return t.cat_all || 'All Dishes';
+      return cat.label || cat.name;
+    }
+    return cat.name;
+  };
+
   return (
     <div className="bg-white border-b border-stone-200 sticky top-[95px] sm:top-[85px] z-30 py-2.5 px-4 shadow-xs">
       <div className="max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar">
         {CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat.id;
+          const displayName = getCatName(cat);
           
           return (
             <button
@@ -23,14 +35,15 @@ export default function CategoryFilter({
             >
               {/* Colored Dot matching cover image badges */}
               <span
-                className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-transform ${
+                className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform ${
                   isActive ? 'bg-white scale-110' : cat.dotColor
                 }`}
               />
               
-              <span>{cat.name}</span>
+              <span>{displayName}</span>
 
-              {cat.label && (
+              {/* Show second language badge in Arabic mode */}
+              {lang === 'ar' && cat.label && (
                 <span
                   className={`text-[9px] font-mono tracking-wider px-1.5 py-0.2 rounded font-black uppercase ${
                     isActive ? 'bg-white/20 text-white' : 'bg-stone-200/70 text-stone-500'

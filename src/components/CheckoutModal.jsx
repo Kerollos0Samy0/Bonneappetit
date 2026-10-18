@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, MessageCircle, Phone, CheckCircle } from 'lucide-react';
+import { X, MessageCircle, CheckCircle } from 'lucide-react';
 import { BUSINESS_INFO } from '../data/products';
+import { UI_TRANSLATIONS } from '../data/translations';
 
 export default function CheckoutModal({
   isOpen,
@@ -9,7 +10,9 @@ export default function CheckoutModal({
   onOrderSuccess,
   currentUser,
   wholesaleDiscountPct,
-  onSaveOrderToAdmin
+  onSaveOrderToAdmin,
+  lang = 'ar',
+  t = UI_TRANSLATIONS.ar
 }) {
   if (!isOpen) return null;
 
@@ -46,11 +49,11 @@ export default function CheckoutModal({
     cartItems.reduce((acc, item) => acc + (item.weightKg || 1) * item.quantity, 0).toFixed(1)
   );
 
-  let shippingTier = 'شحن عادي (100% عميل)';
+  let shippingTier = lang === 'en' ? 'Standard Shipping (Client)' : 'شحن عادي (100% عميل)';
   if (totalWeight >= 20) {
-    shippingTier = 'شحن مجاني 100% (تتحمله بونابيتي)';
+    shippingTier = lang === 'en' ? '100% Free Shipping (Paid by Bonne Appetit)' : 'شحن مجاني 100% (تتحمله بونابيتي)';
   } else if (totalWeight >= 10) {
-    shippingTier = 'خصم 50% على الشحن (مناصفة مع بونابيتي)';
+    shippingTier = lang === 'en' ? '50% Discount on Shipping (Shared)' : 'خصم 50% على الشحن (مناصفة مع بونابيتي)';
   }
 
   const handleChange = (e) => {
@@ -63,7 +66,7 @@ export default function CheckoutModal({
   const handleSendWhatsApp = (e) => {
     e.preventDefault();
     if (!formData.clientName || !formData.phone || !formData.address) {
-      alert('يرجى كتابة الاسم ورقم الموبايل والعنوان للمتابعة');
+      alert(lang === 'en' ? 'Please enter name, phone, and delivery address to proceed' : 'يرجى كتابة الاسم ورقم الموبايل والعنوان للمتابعة');
       return;
     }
 
@@ -90,7 +93,7 @@ export default function CheckoutModal({
     });
 
     msg += `\n⚖️ *إجمالي وزن الشحنة:* ${totalWeight} كجم\n`;
-    msg += `🛵 *شريحة الشحن أوبر:* ${shippingTier}\n`;
+    msg += `🛵 *شريحة الشحن:* ${shippingTier}\n`;
 
     if (isWholesale && savings > 0) {
       msg += `💰 *إجمالي السعر الأصلي:* ${originalTotal} ج.م\n`;
@@ -105,7 +108,7 @@ export default function CheckoutModal({
     msg += `\n------------------------------------\n`;
     msg += `*برجاء تأكيد استلام الأوردر وتحديد موعد خروج المندوب والتسليم.*`;
 
-    // Construct direct WhatsApp link to Bonne Appetit official phone 01055083061
+    // Construct direct WhatsApp link to Bonne Appetit official phone
     const url = `https://wa.me/${BUSINESS_INFO.whatsapp}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
 
@@ -113,7 +116,7 @@ export default function CheckoutModal({
     if (onSaveOrderToAdmin) {
       onSaveOrderToAdmin({
         id: orderId,
-        date: new Date().toLocaleString('ar-EG'),
+        date: new Date().toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'),
         clientName: formData.clientName,
         phone: formData.phone,
         address: formData.address,
@@ -139,7 +142,7 @@ export default function CheckoutModal({
       >
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center text-stone-600"
+          className={`absolute top-4 ${lang === 'ar' ? 'left-4' : 'right-4'} w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center text-stone-600`}
         >
           <X className="w-5 h-5" />
         </button>
@@ -149,11 +152,13 @@ export default function CheckoutModal({
             <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
               <CheckCircle className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-black text-stone-900">تم إرسال الأوردر لواتساب بونابيتي!</h3>
+            <h3 className="text-xl font-black text-stone-900">
+              {lang === 'en' ? 'Order Sent to WhatsApp!' : 'تم إرسال الأوردر لواتساب بونابيتي!'}
+            </h3>
             <p className="text-xs text-stone-600">
-              تم إرسال تفاصيل طلبك مباشرة على واتساب رقم:
+              {lang === 'en' ? 'Your order details were sent directly to WhatsApp:' : 'تم إرسال تفاصيل طلبك مباشرة على واتساب رقم:'}
               <br />
-              <strong className="font-mono text-stone-900 text-sm mt-1 inline-block">
+              <strong className="font-mono text-stone-900 text-sm mt-1 inline-block" dir="ltr">
                 {BUSINESS_INFO.phoneDisplay}
               </strong>
             </p>
@@ -161,25 +166,25 @@ export default function CheckoutModal({
               onClick={onClose}
               className="mt-4 bg-stone-900 text-white text-xs font-bold px-6 py-2 rounded-lg"
             >
-              العودة للمتجر
+              {lang === 'en' ? 'Return to Store' : 'العودة للمتجر'}
             </button>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="border-b border-stone-100 pb-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-black text-stone-900">تأكيد طلب الأوردر</h2>
+                <h2 className="text-lg font-black text-stone-900">{t.checkoutTitle}</h2>
                 {isWholesale && (
                   <span className="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded border border-amber-300">
-                    تاجر جملة (خصم {wholesaleDiscountPct}%)
+                    {t.wholesaleBadge} (-{wholesaleDiscountPct}%)
                   </span>
                 )}
               </div>
               <p className="text-xs text-stone-500 mt-0.5">
-                إجمالي الأوردر: <strong>{totalAmount} جنيه</strong> ({totalWeight} كجم)
+                {t.total} <strong>{totalAmount} {t.currency}</strong> ({totalWeight} {t.kg})
                 {isWholesale && savings > 0 && (
-                  <span className="text-emerald-700 font-bold mr-2">
-                    (وفرت {savings} ج.م خصم جملة)
+                  <span className="text-emerald-700 font-bold mx-2">
+                    ({lang === 'en' ? `Saved ${savings} ${t.currency}` : `وفرت ${savings} ج.م خصم جملة`})
                   </span>
                 )}
               </p>
@@ -188,7 +193,7 @@ export default function CheckoutModal({
             <form onSubmit={handleSendWhatsApp} className="space-y-3 text-xs">
               <div>
                 <label className="block font-bold text-stone-700 mb-1">
-                  الاسم / الكانتين / المحل *
+                  {t.fullName}
                 </label>
                 <input
                   type="text"
@@ -196,14 +201,14 @@ export default function CheckoutModal({
                   required
                   value={formData.clientName}
                   onChange={handleChange}
-                  placeholder="اسم العميل أو الكانتين"
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-stone-500"
+                  placeholder={t.fullNamePlaceholder}
+                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500"
                 />
               </div>
 
               <div>
                 <label className="block font-bold text-stone-700 mb-1">
-                  رقم الموبايل للتواصل *
+                  {t.phone}
                 </label>
                 <input
                   type="tel"
@@ -211,15 +216,15 @@ export default function CheckoutModal({
                   required
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="012XXXXXXXX"
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-stone-500 text-left font-mono"
+                  placeholder={t.phonePlaceholder}
+                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500 font-mono"
                   dir="ltr"
                 />
               </div>
 
               <div>
                 <label className="block font-bold text-stone-700 mb-1">
-                  عنوان التسليم بالتفصيل *
+                  {t.address}
                 </label>
                 <input
                   type="text"
@@ -227,36 +232,36 @@ export default function CheckoutModal({
                   required
                   value={formData.address}
                   onChange={handleChange}
-                  placeholder="المنطقة، الشارع، رقم المكان لتوصيل أوبر"
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-stone-500"
+                  placeholder={t.addressPlaceholder}
+                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500"
                 />
               </div>
 
               <div>
                 <label className="block font-bold text-stone-700 mb-1">
-                  موعد التسليم المناسب
+                  {lang === 'en' ? 'Preferred Delivery Time (Optional)' : 'موعد التسليم المناسب (اختياري)'}
                 </label>
                 <input
                   type="text"
                   name="deliveryDate"
                   value={formData.deliveryDate}
                   onChange={handleChange}
-                  placeholder="مثال: غداً الساعة 2 ظهراً"
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-stone-500"
+                  placeholder={lang === 'en' ? 'e.g. Tomorrow at 2:00 PM' : 'مثال: غداً الساعة 2 ظهراً'}
+                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500"
                 />
               </div>
 
               <div>
                 <label className="block font-bold text-stone-700 mb-1">
-                  ملاحظات إضافية
+                  {t.notes}
                 </label>
                 <input
                   type="text"
                   name="notes"
                   value={formData.notes}
                   onChange={handleChange}
-                  placeholder="أي ملاحظات خاصة بالتسوية أو التغليف"
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-stone-500"
+                  placeholder={t.notesPlaceholder}
+                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500"
                 />
               </div>
 
@@ -266,12 +271,12 @@ export default function CheckoutModal({
                   className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm shadow-md"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>إرسال الطلب فوراً لواتساب بونابيتي ({BUSINESS_INFO.phoneDisplay})</span>
+                  <span>{t.sendOrderWhatsApp} ({BUSINESS_INFO.phoneDisplay})</span>
                 </button>
               </div>
 
               <div className="text-center text-[11px] text-stone-500 pt-1">
-                سيتم إرسال الطلب لرقم بونابيتي المعتمد <strong className="font-mono text-stone-800">{BUSINESS_INFO.phoneDisplay}</strong> عبر واتساب.
+                {t.orderSentNotice}
               </div>
             </form>
           </div>

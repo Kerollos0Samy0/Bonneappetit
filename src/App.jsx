@@ -10,6 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Footer from './components/Footer';
 import { PRODUCTS, BUSINESS_INFO } from './data/products';
 import { DEFAULT_WORKERS, getInitialInventory } from './data/adminDefaults';
+import { UI_TRANSLATIONS, getLocalizedProduct } from './data/translations';
 import { MessageCircle, Phone, Filter } from 'lucide-react';
 
 export default function App() {
@@ -134,7 +135,7 @@ export default function App() {
     }
   });
 
-  // Modals
+  // Modals & Navigation
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [onlyFasting, setOnlyFasting] = useState(false);
@@ -142,6 +143,29 @@ export default function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
+
+  // Language State: 'ar' | 'en'
+  const [lang, setLang] = useState(() => {
+    try {
+      return localStorage.getItem('bonne_appetit_lang') || 'ar';
+    } catch (e) {
+      return 'ar';
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    try {
+      localStorage.setItem('bonne_appetit_lang', lang);
+    } catch (e) {}
+  }, [lang]);
+
+  const handleToggleLang = () => {
+    setLang((prev) => (prev === 'ar' ? 'en' : 'ar'));
+  };
+
+  const t = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS.ar;
 
   // Sync state to LocalStorage
   useEffect(() => {
@@ -503,7 +527,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-stone-50 text-stone-900">
       
-      {/* Header with Auth & Cart */}
+      {/* Header with Auth, Cart & Language Switcher */}
       <Header
         cartCount={cartCount}
         cartTotal={cartTotal}
@@ -516,6 +540,9 @@ export default function App() {
         onLogout={handleLogout}
         wholesaleDiscountPct={wholesaleDiscountPct}
         businessInfo={businessInfo}
+        lang={lang}
+        t={t}
+        onToggleLang={handleToggleLang}
       />
 
       {/* Category Tabs */}
@@ -524,6 +551,8 @@ export default function App() {
         onSelectCategory={(catId) => {
           setActiveCategory(catId);
         }}
+        lang={lang}
+        t={t}
       />
 
       {/* Main Dishes Catalog */}
@@ -534,14 +563,14 @@ export default function App() {
           {currentUser?.role === 'wholesale' && (
             <div className="bg-amber-100/80 border border-amber-300 text-amber-900 px-4 py-2 rounded-xl text-xs flex items-center justify-between">
               <div>
-                <strong>حساب تاجر جملة معتمد ({currentUser.name})</strong>: يتم احتساب نسبة خصم{' '}
-                <strong>{wholesaleDiscountPct}%</strong> تلقائياً على كافة الأسعار!
+                <strong>{t.wholesaleMerchantBadge} ({currentUser.name})</strong>: {t.wholesaleDiscountApplied}{' '}
+                <strong>{wholesaleDiscountPct}%</strong> {t.automaticallyOnAll}
               </div>
               <button
                 onClick={handleLogout}
                 className="text-stone-600 hover:text-stone-900 underline font-bold"
               >
-                تبديل الحساب
+                {t.switchAccount}
               </button>
             </div>
           )}
@@ -549,11 +578,11 @@ export default function App() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-black text-stone-900">
-                قائمة الطعام ({filteredProducts.length} صنف)
+                {t.menuTitle} ({filteredProducts.length} {t.itemCount})
               </h2>
               {onlyFasting && (
                 <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                  مفعّل: الأصناف الصيامية فقط 🌱
+                  {t.fastingActiveBadge}
                 </span>
               )}
             </div>
@@ -569,7 +598,7 @@ export default function App() {
                 }`}
               >
                 <Filter className="w-3.5 h-3.5" />
-                <span>{onlyFasting ? 'إلغاء فلتر الصيامي' : 'فلتر: إظهار الصيامي فقط 🌱'}</span>
+                <span>{onlyFasting ? t.cancelFastingFilter : t.showFastingFilter}</span>
               </button>
             </div>
           </div>
@@ -578,21 +607,26 @@ export default function App() {
         {/* Product Cards Grid with Wholesale Price support */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={handleAddToCart}
-                currentUser={currentUser}
-                wholesaleDiscountPct={wholesaleDiscountPct}
-              />
-            ))}
+            {filteredProducts.map((rawProduct) => {
+              const product = getLocalizedProduct(rawProduct, lang);
+              return (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={handleAddToCart}
+                  currentUser={currentUser}
+                  wholesaleDiscountPct={wholesaleDiscountPct}
+                  lang={lang}
+                  t={t}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16 bg-white rounded-xl border border-stone-200 p-6 space-y-2">
-            <p className="text-sm font-bold text-stone-700">لا توجد أصناف مطابقة لهذا التصنيف</p>
+            <p className="text-sm font-bold text-stone-700">{t.noProductsFound}</p>
             <p className="text-xs text-stone-500">
-              {onlyFasting ? 'جرّب إلغاء فلتر الصيامي لاختيار قسم آخر.' : 'جرب البحث بكلمات أخرى.'}
+              {onlyFasting ? t.cancelFastingFilter : t.tryOtherSearch}
             </p>
             <button
               onClick={() => {
@@ -602,7 +636,7 @@ export default function App() {
               }}
               className="text-xs font-bold text-brand-600 underline"
             >
-              عرض جميع الأصناف
+              {t.viewAllDishes}
             </button>
           </div>
         )}
@@ -610,7 +644,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <Footer onSelectCategory={setActiveCategory} />
+      <Footer onSelectCategory={setActiveCategory} lang={lang} t={t} />
 
       {/* Cart Drawer */}
       <CartDrawer
@@ -626,6 +660,8 @@ export default function App() {
         }}
         currentUser={currentUser}
         wholesaleDiscountPct={wholesaleDiscountPct}
+        lang={lang}
+        t={t}
       />
 
       {/* Checkout Modal with direct WhatsApp ordering to 01055083061 */}
@@ -637,6 +673,8 @@ export default function App() {
         currentUser={currentUser}
         wholesaleDiscountPct={wholesaleDiscountPct}
         onSaveOrderToAdmin={handleSaveOrder}
+        lang={lang}
+        t={t}
       />
 
       {/* Auth Modal (Wholesale Login, Register, Admin) */}
@@ -690,24 +728,24 @@ export default function App() {
       </ErrorBoundary>
 
       {/* Floating Call & WhatsApp Pill Button */}
-      <div className="fixed bottom-5 left-5 z-40 flex items-center gap-2">
+      <div className={`fixed bottom-5 ${lang === 'ar' ? 'left-5' : 'right-5'} z-40 flex items-center gap-2`}>
         <a
           href={`tel:${businessInfo.phone || BUSINESS_INFO.phone}`}
           className="bg-stone-900 hover:bg-stone-800 text-white p-3 rounded-full shadow-lg flex items-center justify-center transition-colors"
-          title={`اتصل برقم بونابيتي: ${businessInfo.phoneDisplay || businessInfo.phone || BUSINESS_INFO.phoneDisplay}`}
+          title={`${t.callDirect} ${businessInfo.phoneDisplay || businessInfo.phone || BUSINESS_INFO.phoneDisplay}`}
         >
           <Phone className="w-5 h-5 text-brand-400" />
         </a>
 
         <a
-          href={`https://wa.me/${businessInfo.whatsapp || BUSINESS_INFO.whatsapp}?text=${encodeURIComponent('مرحباً بونابيتي')}`}
+          href={`https://wa.me/${businessInfo.whatsapp || BUSINESS_INFO.whatsapp}?text=${encodeURIComponent(lang === 'en' ? 'Hello Bonne Appetit' : 'مرحباً بونابيتي')}`}
           target="_blank"
           rel="noreferrer"
           className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2.5 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold transition-colors"
-          title="تواصل معنا عبر واتساب"
+          title={t.whatsappOrder}
         >
           <MessageCircle className="w-4 h-4" />
-          <span>واتساب بونابيتي ({businessInfo.phoneDisplay || businessInfo.phone || BUSINESS_INFO.phoneDisplay})</span>
+          <span>{t.whatsappOrder} ({businessInfo.phoneDisplay || businessInfo.phone || BUSINESS_INFO.phoneDisplay})</span>
         </a>
       </div>
 
