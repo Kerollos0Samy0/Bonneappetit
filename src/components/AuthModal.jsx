@@ -205,7 +205,7 @@ export default function AuthModal({
                 <input
                   type="text"
                   required
-                  placeholder="admin"
+                  placeholder=""
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full pr-9 pl-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-brand-500 font-mono text-left"
@@ -221,7 +221,7 @@ export default function AuthModal({
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  placeholder=""
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pr-9 pl-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-brand-500 font-mono text-left"
@@ -230,17 +230,12 @@ export default function AuthModal({
               </div>
             </div>
 
-            <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-[11px] text-amber-800 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>منطقة دخول مخصصة لإدارة بونابيتي فقط.</span>
-            </div>
-
             <button
               type="submit"
               className="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold py-2.5 px-4 rounded-lg transition-colors text-xs flex items-center justify-center gap-1.5"
             >
               <ShieldCheck className="w-4 h-4 text-brand-400" />
-              <span>دخول لوحة تحكم الإدارة</span>
+              <span>تسجيل الدخول</span>
             </button>
           </form>
         )}

@@ -163,39 +163,53 @@ export default function AdminDashboard({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-      <div
-        className="bg-white rounded-3xl max-w-6xl w-full max-h-[94vh] overflow-y-auto shadow-2xl border border-stone-200 relative my-4 flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Main Header */}
-        <div className="p-5 border-b border-stone-200 flex items-center justify-between bg-stone-900 text-white rounded-t-3xl">
+    <div className="fixed inset-0 z-50 bg-stone-100 flex flex-col w-screen h-screen overflow-hidden">
+      
+      {/* Top Navbar Header */}
+      <header className="bg-stone-900 text-white px-4 sm:px-8 py-3.5 border-b border-stone-800 flex items-center justify-between shrink-0 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-brand-500 text-white flex items-center justify-center font-black text-lg shadow-sm">
+            BA
+          </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-brand-400 bg-stone-800 px-2.5 py-0.5 rounded border border-stone-700">
-                لوحة تحكم الإدارة الكاملة
+              <h1 className="text-base sm:text-xl font-black tracking-tight">
+                لوحة تحكم إدارة بونابيتي <span className="text-brand-400 font-serif">Bonne Appetit</span>
+              </h1>
+              <span className="hidden sm:inline-block text-[11px] font-bold text-brand-300 bg-stone-800 px-2.5 py-0.5 rounded border border-stone-700 font-mono">
+                ERP & POS المركزي
               </span>
-              <span className="text-xs text-stone-400 font-mono">ERP & POS</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black mt-1">
-              إدارة بونابيتي <span className="text-brand-500 font-serif">Bonne Appetit</span>
-            </h2>
-            <p className="text-xs text-stone-400 mt-0.5">
+            <p className="text-[11px] text-stone-400 hidden sm:block">
               المخزن المركزي • تسجيل إنتاج العمال • إصدار الفواتير • الطلبات وحسابات الجملة
             </p>
           </div>
+        </div>
+
+        {/* Top Actions */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition-all border border-stone-700 shadow-xs"
+          >
+            <span>الرجوع للمتجر</span>
+            <span className="text-sm">🏪</span>
+          </button>
 
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center transition-colors"
+            className="w-9 h-9 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition-colors border border-stone-700"
+            title="إغلاق لوحة التحكم والرجوع للمتجر"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+      </header>
 
-        {/* Global Summary Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-stone-50 border-b border-stone-200 text-xs">
-          <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs">
+      {/* Global Summary Stats Row */}
+      <div className="bg-white border-b border-stone-200 px-4 sm:px-8 py-3 shrink-0">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
             <span className="text-stone-500 font-medium block mb-1">رصيد المخزن الحالي</span>
             <div className="flex items-center gap-2">
               <Boxes className="w-4 h-4 text-brand-600" />
@@ -204,7 +218,7 @@ export default function AdminDashboard({
             </div>
           </div>
 
-          <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs">
+          <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
             <span className="text-stone-500 font-medium block mb-1">إجمالي المبيعات</span>
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-emerald-600" />
@@ -212,7 +226,7 @@ export default function AdminDashboard({
             </div>
           </div>
 
-          <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs">
+          <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
             <span className="text-stone-500 font-medium block mb-1">الفواتير والأوردرات</span>
             <div className="flex items-center gap-2">
               <Receipt className="w-4 h-4 text-indigo-600" />
@@ -221,7 +235,7 @@ export default function AdminDashboard({
             </div>
           </div>
 
-          <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs">
+          <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
             <span className="text-stone-500 font-medium block mb-1">تجار الجملة المعتمدين</span>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-amber-600" />
@@ -230,9 +244,11 @@ export default function AdminDashboard({
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Navigation Tabs Bar */}
-        <div className="flex overflow-x-auto border-b border-stone-200 px-4 text-xs font-bold bg-white scrollbar-none">
+      {/* Navigation Tabs Bar */}
+      <div className="bg-white border-b border-stone-200 px-4 sm:px-8 shrink-0">
+        <div className="max-w-7xl mx-auto flex overflow-x-auto text-xs font-bold scrollbar-none">
           
           {/* TAB: Inventory */}
           <button
@@ -312,9 +328,11 @@ export default function AdminDashboard({
             <span>الإعدادات والأمان</span>
           </button>
         </div>
+      </div>
 
-        {/* Dynamic Content Area */}
-        <div className="p-5 flex-1 overflow-y-auto">
+      {/* Dynamic Content Area */}
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-stone-100">
+        <div className="max-w-7xl mx-auto space-y-6">
           
           {/* TAB 1: Inventory & Stock */}
           {activeTab === 'inventory' && (
@@ -794,18 +812,22 @@ export default function AdminDashboard({
           )}
 
         </div>
+      </main>
 
-        {/* Footer */}
-        <div className="p-4 bg-stone-100 border-t border-stone-200 text-stone-500 text-xs flex justify-between items-center rounded-b-3xl">
-          <span>هاتف إدارة بونابيتي المعتمد: {BUSINESS_INFO.phoneDisplay}</span>
-          <button
-            onClick={onClose}
-            className="bg-stone-900 text-white px-5 py-2 rounded-xl font-bold text-xs hover:bg-stone-800 transition-colors"
-          >
-            إغلاق لوحة التحكم
-          </button>
+      {/* Footer */}
+      <footer className="px-4 sm:px-8 py-3 bg-stone-900 border-t border-stone-800 text-stone-400 text-xs flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span className="text-stone-300 font-medium">نظام إدارة بونابيتي نشط</span>
+          <span className="hidden sm:inline text-stone-500">• هاتف الإدارة: {BUSINESS_INFO.phoneDisplay}</span>
         </div>
-      </div>
+        <button
+          onClick={onClose}
+          className="bg-stone-800 hover:bg-stone-700 text-stone-200 px-4 py-1.5 rounded-xl font-bold text-xs transition-colors border border-stone-700 shadow-xs"
+        >
+          الخروج والرجوع للمتجر 🏪
+        </button>
+      </footer>
 
       {/* Invoice View Modal */}
       {selectedInvoiceForView && (
