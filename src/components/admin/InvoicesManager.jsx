@@ -4,6 +4,7 @@ import { PRODUCTS, BUSINESS_INFO } from '../../data/products';
 import { generateInvoiceNumber } from '../../data/adminDefaults';
 
 export default function InvoicesManager({
+  products = PRODUCTS,
   invoices,
   onCreateInvoice,
   onCancelInvoice,
@@ -75,7 +76,7 @@ export default function InvoicesManager({
   // When product dropdown changes in item row
   const handleProductSelect = (prodId) => {
     setCurrentProductId(prodId);
-    const prod = PRODUCTS.find((p) => p.id === prodId);
+    const prod = products.find((p) => p.id === prodId);
     if (prod) {
       setCustomPrice(String(prod.price));
     } else {
@@ -99,7 +100,7 @@ export default function InvoicesManager({
       return;
     }
 
-    const product = PRODUCTS.find((p) => p.id === currentProductId);
+    const product = products.find((p) => p.id === currentProductId);
     if (!product) return;
 
     const availableStock = inventory[product.id] || 0;
@@ -393,7 +394,7 @@ export default function InvoicesManager({
                   className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium focus:outline-hidden focus:border-brand-500"
                 >
                   <option value="">-- اختر صنفاً --</option>
-                  {PRODUCTS.map((prod) => {
+                  {products.map((prod) => {
                     const stock = inventory[prod.id] || 0;
                     return (
                       <option key={prod.id} value={prod.id}>

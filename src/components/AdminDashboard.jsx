@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { 
   X, ShoppingBag, Users, Percent, DollarSign, CheckCircle2, Clock, 
   Truck, MessageCircle, Trash2, Save, UserPlus, Boxes, UserCheck, 
-  Receipt, ArrowDownRight, Package, ArrowUpRight, Lock, ShieldCheck, Key, Eye, EyeOff
+  Receipt, ArrowDownRight, Package, ArrowUpRight, Lock, ShieldCheck, Key, Eye, EyeOff,
+  Utensils, Globe, Phone
 } from 'lucide-react';
 import { BUSINESS_INFO, PRODUCTS } from '../data/products';
 import InventoryManager from './admin/InventoryManager';
 import WorkersManager from './admin/WorkersManager';
 import InvoicesManager from './admin/InvoicesManager';
+import ProductCatalogManager from './admin/ProductCatalogManager';
 import InvoiceViewModal from './admin/InvoiceViewModal';
 
 export default function AdminDashboard({
@@ -35,11 +37,21 @@ export default function AdminDashboard({
   onDeleteProductionLog,
   invoices,
   onCreateInvoice,
-  onCancelInvoice
+  onCancelInvoice,
+  // Catalog & Store Control
+  products = PRODUCTS,
+  onUpdateProduct,
+  onToggleProductVisibility,
+  onAddProduct,
+  onDeleteProduct,
+  onMoveProduct,
+  onResetProducts,
+  businessInfo,
+  onUpdateBusinessInfo
 }) {
   if (!isOpen) return null;
 
-  // Tabs: 'inventory' | 'workers' | 'invoices' | 'orders' | 'merchants' | 'discount'
+  // Tabs: 'inventory' | 'catalog' | 'workers' | 'invoices' | 'orders' | 'merchants' | 'discount'
   const [activeTab, setActiveTab] = useState('inventory');
   
   // Invoice View Modal state
@@ -110,7 +122,28 @@ export default function AdminDashboard({
   const totalInvoicesCount = invoices.length;
   const totalRevenue = invoices.reduce((acc, i) => acc + (i.total || 0), 0) + orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
   const totalUnitsInStock = Object.values(inventory || {}).reduce((acc, q) => acc + (q || 0), 0);
-  const totalWholesaleMerchants = wholesaleUsers.filter((u) => u.approved).length;
+  // Store Settings State (Banner text, Phone, WhatsApp, Slogan)
+  const [storePhone, setStorePhone] = useState(() => businessInfo?.phone || BUSINESS_INFO.phone);
+  const [storeWhatsapp, setStoreWhatsapp] = useState(() => businessInfo?.whatsapp || BUSINESS_INFO.whatsapp);
+  const [storeBannerText, setStoreBannerText] = useState(() => businessInfo?.shippingPolicy || BUSINESS_INFO.shippingPolicy);
+  const [storeSlogan, setStoreSlogan] = useState(() => businessInfo?.slogan || BUSINESS_INFO.slogan);
+  const [storeSettingsSuccess, setStoreSettingsSuccess] = useState(false);
+
+  const handleSaveStoreSettings = (e) => {
+    e.preventDefault();
+    if (onUpdateBusinessInfo) {
+      onUpdateBusinessInfo({
+        ...businessInfo,
+        phone: storePhone.trim(),
+        phoneDisplay: storePhone.trim(),
+        whatsapp: storeWhatsapp.trim(),
+        shippingPolicy: storeBannerText.trim(),
+        slogan: storeSlogan.trim()
+      });
+      setStoreSettingsSuccess(true);
+      setTimeout(() => setStoreSettingsSuccess(false), 3000);
+    }
+  };
 
   const handleSaveDiscount = (e) => {
     e.preventDefault();
@@ -263,6 +296,19 @@ export default function AdminDashboard({
             <span>المخزن والجرد</span>
           </button>
 
+          {/* TAB: Catalog & Menu */}
+          <button
+            onClick={() => setActiveTab('catalog')}
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'catalog'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <Utensils className="w-4 h-4" />
+            <span>المنيو والأصناف ({products.length})</span>
+          </button>
+
           {/* TAB: Workers Production */}
           <button
             onClick={() => setActiveTab('workers')}
@@ -337,6 +383,7 @@ export default function AdminDashboard({
           {/* TAB 1: Inventory & Stock */}
           {activeTab === 'inventory' && (
             <InventoryManager
+              products={products}
               inventory={inventory}
               onUpdateStock={onUpdateStock}
               stockMovements={stockMovements}
@@ -344,9 +391,23 @@ export default function AdminDashboard({
             />
           )}
 
-          {/* TAB 2: Workers Production */}
+          {/* TAB 2: Catalog & Products Management */}
+          {activeTab === 'catalog' && (
+            <ProductCatalogManager
+              products={products}
+              onUpdateProduct={onUpdateProduct}
+              onToggleProductVisibility={onToggleProductVisibility}
+              onAddProduct={onAddProduct}
+              onDeleteProduct={onDeleteProduct}
+              onMoveProduct={onMoveProduct}
+              onResetProducts={onResetProducts}
+            />
+          )}
+
+          {/* TAB 3: Workers Production */}
           {activeTab === 'workers' && (
             <WorkersManager
+              products={products}
               workers={workers}
               onAddWorker={onAddWorker}
               onDeleteWorker={onDeleteWorker}
@@ -357,9 +418,10 @@ export default function AdminDashboard({
             />
           )}
 
-          {/* TAB 3: Invoices & POS */}
+          {/* TAB 4: Invoices & POS */}
           {activeTab === 'invoices' && (
             <InvoicesManager
+              products={products}
               invoices={invoices}
               onCreateInvoice={onCreateInvoice}
               onCancelInvoice={onCancelInvoice}
@@ -805,6 +867,84 @@ export default function AdminDashboard({
                 >
                   <Save className="w-4 h-4" />
                   <span>حفظ نسبة الخصم</span>
+                </button>
+              </form>
+
+              {/* General Store Settings Form (Banner, Phone, WhatsApp) */}
+              <form onSubmit={handleSaveStoreSettings} className="bg-white border border-stone-200 rounded-3xl p-6 space-y-4 shadow-sm text-xs">
+                <div className="flex items-center gap-2 pb-2 border-b border-stone-200">
+                  <Globe className="w-5 h-5 text-brand-600" />
+                  <div>
+                    <h3 className="font-black text-stone-900 text-base">
+                      إعدادات المتجر وأرقام التواصل وشريط الإعلانات
+                    </h3>
+                    <p className="text-stone-500 text-[11px]">
+                      تعديل أرقام الهواتف ونصوص الموقع الترويجية مباشرة.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-bold text-stone-700 block mb-1">هاتف الطلبات الرئيسي:</label>
+                    <input
+                      type="text"
+                      required
+                      value={storePhone}
+                      onChange={(e) => setStorePhone(e.target.value)}
+                      className="w-full p-2.5 rounded-xl border border-stone-300 font-mono focus:outline-hidden focus:border-brand-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-stone-700 block mb-1">رقم الواتساب الرسمي:</label>
+                    <input
+                      type="text"
+                      required
+                      value={storeWhatsapp}
+                      onChange={(e) => setStoreWhatsapp(e.target.value)}
+                      className="w-full p-2.5 rounded-xl border border-stone-300 font-mono focus:outline-hidden focus:border-brand-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-stone-700 block mb-1">
+                    نص شريط الإعلانات العلوي (سياسة الشحن والعروض):
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={storeBannerText}
+                    onChange={(e) => setStoreBannerText(e.target.value)}
+                    placeholder="مثال: الشحن: خصم 50% (من 10 كجم) | مجاني (من 20 كجم فأكثر)"
+                    className="w-full p-2.5 rounded-xl border border-stone-300 focus:outline-hidden focus:border-brand-500 font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-stone-700 block mb-1">سلوجان المتجر:</label>
+                  <input
+                    type="text"
+                    value={storeSlogan}
+                    onChange={(e) => setStoreSlogan(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 focus:outline-hidden focus:border-brand-500"
+                  />
+                </div>
+
+                {storeSettingsSuccess && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-bold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>✓ تم تحديث بيانات المتجر والشريط العلوي بنجاح!</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="bg-stone-900 hover:bg-stone-800 text-white font-bold py-2.5 px-6 rounded-xl text-xs flex items-center gap-1.5 transition-colors shadow-xs"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>حفظ إعدادات المتجر والتواصل</span>
                 </button>
               </form>
 

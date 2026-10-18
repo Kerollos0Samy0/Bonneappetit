@@ -12,8 +12,11 @@ export default function Header({
   onOpenAuth,
   onOpenAdmin,
   onLogout,
-  wholesaleDiscountPct
+  wholesaleDiscountPct,
+  businessInfo = BUSINESS_INFO
 }) {
+  const info = businessInfo || BUSINESS_INFO;
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-stone-200 shadow-xs">
       {/* Top Simple Bar: Contact, Free Shipping, & User Account */}
@@ -21,7 +24,7 @@ export default function Header({
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
           
           <div className="flex items-center gap-3">
-            <span>🛵 الشحن: خصم 50% (من 10 كجم) | مجاني (من 20 كجم فأكثر)</span>
+            <span>🛵 {info.shippingPolicy || "الشحن: خصم 50% (من 10 كجم) | مجاني (من 20 كجم فأكثر)"}</span>
             
             {/* Wholesale Merchant Active Banner */}
             {currentUser?.role === 'wholesale' && (
@@ -34,11 +37,11 @@ export default function Header({
           <div className="flex items-center gap-4">
             {/* Phone direct call */}
             <a
-              href={`tel:${BUSINESS_INFO.phone}`}
+              href={`tel:${info.phone}`}
               className="flex items-center gap-1.5 hover:text-white transition-colors"
             >
               <Phone className="w-3.5 h-3.5 text-brand-400" />
-              <span>هاتف الطلبات: <strong className="font-mono text-white text-sm">{BUSINESS_INFO.phoneDisplay}</strong></span>
+              <span>هاتف الطلبات: <strong className="font-mono text-white text-sm">{info.phoneDisplay || info.phone}</strong></span>
             </a>
 
             {/* Auth / Account Link */}
@@ -102,14 +105,14 @@ export default function Header({
             <div className="flex flex-col justify-center">
               <div className="flex items-center gap-3.5 sm:gap-4">
                 <span className="text-2xl sm:text-3xl font-black text-stone-900">
-                  {BUSINESS_INFO.nameAr}
+                  {info.nameAr || BUSINESS_INFO.nameAr}
                 </span>
                 <span className="text-xs sm:text-sm font-bold text-stone-400 font-sans tracking-wide">
-                  {BUSINESS_INFO.name}
+                  {info.name || BUSINESS_INFO.name}
                 </span>
               </div>
               <p className="text-xs sm:text-[13px] text-stone-500 font-medium mt-2 leading-relaxed tracking-wide">
-                أكلات بيتي جاهزة للتسوية الفورية
+                {info.slogan || 'أكلات بيتي جاهزة للتسوية الفورية'}
               </p>
             </div>
           </div>

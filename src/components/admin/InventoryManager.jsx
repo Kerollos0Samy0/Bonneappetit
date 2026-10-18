@@ -3,6 +3,7 @@ import { Package, Search, Plus, Minus, AlertTriangle, CheckCircle2, SlidersHoriz
 import { PRODUCTS, CATEGORIES } from '../../data/products';
 
 export default function InventoryManager({
+  products = PRODUCTS,
   inventory,
   onUpdateStock,
   stockMovements,
@@ -20,7 +21,7 @@ export default function InventoryManager({
 
   // Filtered Products
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((product) => {
+    return products.filter((product) => {
       const matchesSearch =
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -43,22 +44,22 @@ export default function InventoryManager({
   }, [searchTerm, categoryFilter, stockStatusFilter, inventory]);
 
   // Overall Warehouse Stats
-  const totalItemsCount = PRODUCTS.length;
+  const totalItemsCount = products.length;
   const totalUnitsInStock = Object.values(inventory).reduce((acc, q) => acc + (q || 0), 0);
   
   const totalValuation = useMemo(() => {
-    return PRODUCTS.reduce((acc, product) => {
+    return products.reduce((acc, product) => {
       const qty = inventory[product.id] || 0;
       return acc + qty * product.price;
     }, 0);
-  }, [inventory]);
+  }, [inventory, products]);
 
-  const lowStockCount = PRODUCTS.filter((p) => {
+  const lowStockCount = products.filter((p) => {
     const q = inventory[p.id] || 0;
     return q > 0 && q <= 5;
   }).length;
 
-  const outOfStockCount = PRODUCTS.filter((p) => {
+  const outOfStockCount = products.filter((p) => {
     const q = inventory[p.id] || 0;
     return q === 0;
   }).length;
@@ -67,7 +68,7 @@ export default function InventoryManager({
   const handleQuickAdjust = (productId, delta) => {
     const current = inventory[productId] || 0;
     const next = Math.max(0, current + delta);
-    const product = PRODUCTS.find((p) => p.id === productId);
+    const product = products.find((p) => p.id === productId);
 
     onUpdateStock(productId, next);
 
@@ -218,7 +219,7 @@ export default function InventoryManager({
                   : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
               }`}
             >
-              جميع الأقسام ({PRODUCTS.length})
+              جميع الأقسام ({products.length})
             </button>
             {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => (
               <button

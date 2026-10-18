@@ -3,6 +3,7 @@ import { UserCheck, Plus, Search, Calendar, Clock, CheckCircle2, AlertCircle, Tr
 import { PRODUCTS } from '../../data/products';
 
 export default function WorkersManager({
+  products = PRODUCTS,
   workers,
   onAddWorker,
   onDeleteWorker,
@@ -54,7 +55,7 @@ export default function WorkersManager({
     }
 
     const worker = workers.find((w) => w.id === selectedWorkerId);
-    const product = PRODUCTS.find((p) => p.id === selectedProductId);
+    const product = products.find((p) => p.id === selectedProductId);
 
     if (!worker || !product) {
       setErrorMsg('بيانات العامل أو الصنف غير صالحة');
@@ -260,7 +261,7 @@ export default function WorkersManager({
               className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium focus:outline-hidden focus:border-brand-500"
             >
               <option value="">-- اختر الصنف من المنيو --</option>
-              {PRODUCTS.map((prod) => (
+              {products.map((prod) => (
                 <option key={prod.id} value={prod.id}>
                   {prod.name} (المخزون الحالي: {inventory[prod.id] || 0} {prod.unit})
                 </option>

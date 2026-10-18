@@ -114,6 +114,26 @@ export default function App() {
     }
   });
 
+  // Dynamic Products Catalog state (full admin control: add, edit, reorder, hide)
+  const [products, setProducts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_products_v2');
+      return saved ? JSON.parse(saved) : PRODUCTS;
+    } catch (e) {
+      return PRODUCTS;
+    }
+  });
+
+  // Dynamic Business Info state (phone, whatsapp, banner text, slogan)
+  const [businessInfo, setBusinessInfo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_business_info');
+      return saved ? JSON.parse(saved) : BUSINESS_INFO;
+    } catch (e) {
+      return BUSINESS_INFO;
+    }
+  });
+
   // Modals
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -184,6 +204,18 @@ export default function App() {
       localStorage.setItem('bonne_appetit_stock_movements', JSON.stringify(stockMovements));
     } catch (e) {}
   }, [stockMovements]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_products_v2', JSON.stringify(products));
+    } catch (e) {}
+  }, [products]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_business_info', JSON.stringify(businessInfo));
+    } catch (e) {}
+  }, [businessInfo]);
 
   // Auth Handlers
   const handleLoginSuccess = (user) => {
@@ -354,9 +386,60 @@ export default function App() {
     setInvoices((prev) => prev.filter((i) => i.id !== invoiceId));
   };
 
-  // Filtered products
+  // Product Catalog Handlers (Full admin control: add, edit, reorder, visibility toggle)
+  const handleUpdateProduct = (updatedProduct) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+    );
+  };
+
+  const handleToggleProductVisibility = (productId) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, hidden: !p.hidden } : p))
+    );
+  };
+
+  const handleAddProduct = (newProduct) => {
+    setProducts((prev) => [newProduct, ...prev]);
+    setInventory((prev) => ({
+      ...prev,
+      [newProduct.id]: prev[newProduct.id] || 20
+    }));
+  };
+
+  const handleDeleteProduct = (productId) => {
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
+  };
+
+  const handleMoveProduct = (productId, direction) => {
+    setProducts((prev) => {
+      const index = prev.findIndex((p) => p.id === productId);
+      if (index === -1) return prev;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+
+      const updated = [...prev];
+      const [moved] = updated.splice(index, 1);
+      updated.splice(targetIndex, 0, moved);
+      return updated;
+    });
+  };
+
+  const handleResetProducts = () => {
+    setProducts(PRODUCTS);
+    localStorage.removeItem('bonne_appetit_products_v2');
+  };
+
+  const handleUpdateBusinessInfo = (newInfo) => {
+    setBusinessInfo(newInfo);
+  };
+
+  // Filtered products for public storefront
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((product) => {
+    return products.filter((product) => {
+      // Hide product from public store if hidden by admin
+      if (product.hidden && currentUser?.role !== 'admin') return false;
+
       if (onlyFasting && !product.isFasting) return false;
 
       if (activeCategory !== 'all') {
@@ -373,7 +456,7 @@ export default function App() {
 
       return true;
     });
-  }, [activeCategory, searchTerm, onlyFasting]);
+  }, [products, currentUser, onlyFasting, activeCategory, searchTerm]);
 
   // Cart operations
   const handleAddToCart = (product, quantity = 1) => {
@@ -432,6 +515,7 @@ export default function App() {
         onOpenAdmin={() => setIsAdminDashboardOpen(true)}
         onLogout={handleLogout}
         wholesaleDiscountPct={wholesaleDiscountPct}
+        businessInfo={businessInfo}
       />
 
       {/* Hero Banner with Cover2 image */}
@@ -594,27 +678,37 @@ export default function App() {
         invoices={invoices}
         onCreateInvoice={handleCreateInvoice}
         onCancelInvoice={handleCancelInvoice}
+        // Catalog & Store Control
+        products={products}
+        onUpdateProduct={handleUpdateProduct}
+        onToggleProductVisibility={handleToggleProductVisibility}
+        onAddProduct={handleAddProduct}
+        onDeleteProduct={handleDeleteProduct}
+        onMoveProduct={handleMoveProduct}
+        onResetProducts={handleResetProducts}
+        businessInfo={businessInfo}
+        onUpdateBusinessInfo={handleUpdateBusinessInfo}
       />
 
       {/* Floating Call & WhatsApp Pill Button */}
       <div className="fixed bottom-5 left-5 z-40 flex items-center gap-2">
         <a
-          href={`tel:${BUSINESS_INFO.phone}`}
+          href={`tel:${businessInfo.phone || BUSINESS_INFO.phone}`}
           className="bg-stone-900 hover:bg-stone-800 text-white p-3 rounded-full shadow-lg flex items-center justify-center transition-colors"
-          title={`اتصل برقم بونابيتي: ${BUSINESS_INFO.phoneDisplay}`}
+          title={`اتصل برقم بونابيتي: ${businessInfo.phoneDisplay || businessInfo.phone || BUSINESS_INFO.phoneDisplay}`}
         >
           <Phone className="w-5 h-5 text-brand-400" />
         </a>
 
         <a
-          href={`https://wa.me/${BUSINESS_INFO.whatsapp}?text=${encodeURIComponent('مرحباً بونابيتي')}`}
+          href={`https://wa.me/${businessInfo.whatsapp || BUSINESS_INFO.whatsapp}?text=${encodeURIComponent('مرحباً بونابيتي')}`}
           target="_blank"
           rel="noreferrer"
           className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2.5 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold transition-colors"
           title="تواصل معنا عبر واتساب"
         >
           <MessageCircle className="w-4 h-4" />
-          <span>واتساب بونابيتي ({BUSINESS_INFO.phoneDisplay})</span>
+          <span>واتساب بونابيتي ({businessInfo.phoneDisplay || businessInfo.phone || BUSINESS_INFO.phoneDisplay})</span>
         </a>
       </div>
 

@@ -28,6 +28,20 @@ export default function ProductCard({
   return (
     <div className="bg-white rounded-xl border border-stone-200 p-4 hover:border-stone-400 hover:shadow-sm transition-all flex flex-col justify-between relative overflow-hidden">
       
+      {/* Product Image if available */}
+      {product.image && (
+        <div className="w-full h-36 rounded-lg overflow-hidden mb-3 bg-stone-100 border border-stone-200">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
+
       {/* Category Color Accent Dot & Tag */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-2">
