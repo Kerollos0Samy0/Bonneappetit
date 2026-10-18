@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
-import Hero from './components/Hero';
 import CategoryFilter from './components/CategoryFilter';
 import ProductCard from './components/ProductCard';
 import CartDrawer from './components/CartDrawer';
@@ -517,9 +516,6 @@ export default function App() {
         wholesaleDiscountPct={wholesaleDiscountPct}
         businessInfo={businessInfo}
       />
-
-      {/* Hero Banner with Cover2 image */}
-      <Hero onExploreMenu={() => {}} />
 
       {/* Category Tabs */}
       <CategoryFilter
