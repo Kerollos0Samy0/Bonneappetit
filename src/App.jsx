@@ -78,8 +78,18 @@ export default function App() {
   // Workers list
   const [workers, setWorkers] = useState(() => {
     try {
-      const saved = localStorage.getItem('bonne_appetit_workers');
-      return saved ? JSON.parse(saved) : DEFAULT_WORKERS;
+      const saved = localStorage.getItem('bonne_appetit_workers_v2');
+      if (saved) return JSON.parse(saved);
+
+      const old = localStorage.getItem('bonne_appetit_workers');
+      if (old) {
+        const parsed = JSON.parse(old);
+        if (parsed.some((w) => w.name && (w.name.includes('أحمد صابر') || w.name.includes('مينا عادل') || w.name.includes('سناء يوسف')))) {
+          return DEFAULT_WORKERS;
+        }
+        return parsed;
+      }
+      return DEFAULT_WORKERS;
     } catch (e) {
       return DEFAULT_WORKERS;
     }
@@ -207,6 +217,7 @@ export default function App() {
 
   useEffect(() => {
     try {
+      localStorage.setItem('bonne_appetit_workers_v2', JSON.stringify(workers));
       localStorage.setItem('bonne_appetit_workers', JSON.stringify(workers));
     } catch (e) {}
   }, [workers]);

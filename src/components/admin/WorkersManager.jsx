@@ -503,22 +503,57 @@ export default function WorkersManager({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3">
+              <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsAddWorkerOpen(false)}
                   className="px-4 py-2 rounded-xl border border-stone-200 text-stone-600 font-bold hover:bg-stone-100"
                 >
-                  إلغاء
+                  إغلاق
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-xs"
                 >
-                  إضافة العامل الآن
+                  + إضافة العامل للفريق
                 </button>
               </div>
             </form>
+
+            {/* Current Workers List */}
+            <div className="mt-5 pt-4 border-t border-stone-200">
+              <h4 className="font-bold text-stone-800 text-xs mb-2">
+                فريق العمل الحالي المسجل ({workers.length}):
+              </h4>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {workers.map((w) => (
+                  <div
+                    key={w.id}
+                    className="flex items-center justify-between p-2 rounded-xl bg-stone-50 border border-stone-200 text-xs"
+                  >
+                    <div>
+                      <span className="font-bold text-stone-900 block">{w.name}</span>
+                      <span className="text-[10px] text-stone-500">{w.role || 'عامل تجهيز وإنتاج'}</span>
+                    </div>
+                    {onDeleteWorker && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`هل أنت متأكد من حذف "${w.name}" من فريق العمل؟`)) {
+                            onDeleteWorker(w.id);
+                          }
+                        }}
+                        className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="حذف العامل"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       )}

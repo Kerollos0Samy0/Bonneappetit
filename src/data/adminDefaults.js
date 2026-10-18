@@ -2,11 +2,11 @@ import { PRODUCTS } from './products';
 
 // Default Workers list for Bonne Appetit
 export const DEFAULT_WORKERS = [
-  { id: 'w_1', name: 'شيف أحمد صابر', role: 'تجهيز وتتبيل اللحوم والدواجن', phone: '01011112233', active: true },
-  { id: 'w_2', name: 'أم مريم', role: 'لف وتجهيز المحاشي والممبار', phone: '01022223344', active: true },
-  { id: 'w_3', name: 'شيف مينا عادل', role: 'تشكيل الكفتة والسمبوسك والكبيبة', phone: '01033334455', active: true },
-  { id: 'w_4', name: 'شيف إبراهيم كمال', role: 'تجهيز الأسماك والبحريات', phone: '01044445566', active: true },
-  { id: 'w_5', name: 'سناء يوسف', role: 'قسم الخضار والتجهيز النباتي والصيامي', phone: '01055556677', active: true }
+  { id: 'w_1', name: 'أم عطية', role: 'تجهيز وإنتاج أكلات بيتي', phone: '', active: true },
+  { id: 'w_2', name: 'أم محمد', role: 'تجهيز وإنتاج أكلات بيتي', phone: '', active: true },
+  { id: 'w_3', name: 'علا', role: 'تجهيز وإنتاج أكلات بيتي', phone: '', active: true },
+  { id: 'w_4', name: 'فاطمة', role: 'تجهيز وإنتاج أكلات بيتي', phone: '', active: true },
+  { id: 'w_5', name: 'أم محمود', role: 'تجهيز وإنتاج أكلات بيتي', phone: '', active: true }
 ];
 
 // Generate initial inventory with realistic stock numbers
