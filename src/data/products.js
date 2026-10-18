@@ -12,7 +12,7 @@ export const BUSINESS_INFO = {
   defaultWholesaleDiscount: 15, // 15% wholesale discount
   adminCredentials: {
     username: "admin",
-    password: "123"
+    password: "BA#Admin$2026!Secure"
   },
   defaultWholesaleUsers: [
     {

@@ -9,6 +9,7 @@ import AuthModal from './components/AuthModal';
 import AdminDashboard from './components/AdminDashboard';
 import Footer from './components/Footer';
 import { PRODUCTS, BUSINESS_INFO } from './data/products';
+import { DEFAULT_WORKERS, getInitialInventory } from './data/adminDefaults';
 import { MessageCircle, Phone, Filter } from 'lucide-react';
 
 export default function App() {
@@ -63,6 +64,56 @@ export default function App() {
     }
   });
 
+  // Central Warehouse / Inventory state
+  const [inventory, setInventory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_inventory_v1');
+      return saved ? JSON.parse(saved) : getInitialInventory();
+    } catch (e) {
+      return getInitialInventory();
+    }
+  });
+
+  // Workers list
+  const [workers, setWorkers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_workers');
+      return saved ? JSON.parse(saved) : DEFAULT_WORKERS;
+    } catch (e) {
+      return DEFAULT_WORKERS;
+    }
+  });
+
+  // Worker daily production logs
+  const [productionLogs, setProductionLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_production_logs');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Sales Invoices
+  const [invoices, setInvoices] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_invoices');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Stock movements audit log
+  const [stockMovements, setStockMovements] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_stock_movements');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   // Modals
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,6 +154,36 @@ export default function App() {
       localStorage.setItem('bonne_appetit_orders', JSON.stringify(orders));
     } catch (e) {}
   }, [orders]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_inventory_v1', JSON.stringify(inventory));
+    } catch (e) {}
+  }, [inventory]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_workers', JSON.stringify(workers));
+    } catch (e) {}
+  }, [workers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_production_logs', JSON.stringify(productionLogs));
+    } catch (e) {}
+  }, [productionLogs]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_invoices', JSON.stringify(invoices));
+    } catch (e) {}
+  }, [invoices]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_stock_movements', JSON.stringify(stockMovements));
+    } catch (e) {}
+  }, [stockMovements]);
 
   // Auth Handlers
   const handleLoginSuccess = (user) => {
@@ -151,6 +232,126 @@ export default function App() {
     if (window.confirm('هل تريد مسح سجل الأوردرات بالكامل؟')) {
       setOrders([]);
     }
+  };
+
+  // Inventory & Stock Movements Handlers
+  const handleUpdateStock = (productId, newQuantity) => {
+    setInventory((prev) => ({
+      ...prev,
+      [productId]: Math.max(0, newQuantity)
+    }));
+  };
+
+  const handleAddStockMovement = (movement) => {
+    setStockMovements((prev) => [movement, ...prev]);
+  };
+
+  // Workers Handlers
+  const handleAddWorker = (newWorker) => {
+    setWorkers((prev) => [...prev, newWorker]);
+  };
+
+  const handleDeleteWorker = (workerId) => {
+    setWorkers((prev) => prev.filter((w) => w.id !== workerId));
+  };
+
+  // Production Handlers - AUTOMATICALLY ADDS TO INVENTORY
+  const handleLogProduction = (newLog) => {
+    // 1. Add to production logs
+    setProductionLogs((prev) => [newLog, ...prev]);
+
+    // 2. Automatically ADD to inventory
+    const prevQty = inventory[newLog.productId] || 0;
+    const newQty = prevQty + newLog.quantity;
+    setInventory((prev) => ({
+      ...prev,
+      [newLog.productId]: newQty
+    }));
+
+    // 3. Automatically record in stock movements
+    handleAddStockMovement({
+      id: 'mov_' + Date.now(),
+      date: new Date().toLocaleString('ar-EG'),
+      type: 'in_production',
+      productId: newLog.productId,
+      productName: newLog.productName,
+      quantityChange: newLog.quantity,
+      previousStock: prevQty,
+      newStock: newQty,
+      reference: `وارد إنتاج عمال: ${newLog.workerName} (${newLog.shift})`,
+      notes: newLog.notes || 'تمت الإضافة للمخزن أوتوماتيكياً'
+    });
+  };
+
+  const handleDeleteProductionLog = (logId) => {
+    setProductionLogs((prev) => prev.filter((l) => l.id !== logId));
+  };
+
+  // Invoices Handlers - AUTOMATICALLY DEDUCTS FROM INVENTORY
+  const handleCreateInvoice = (newInvoice) => {
+    // 1. Add to invoices
+    setInvoices((prev) => [newInvoice, ...prev]);
+
+    // 2. Automatically DEDUCT from inventory
+    setInventory((prev) => {
+      const updated = { ...prev };
+      newInvoice.items.forEach((item) => {
+        const cur = updated[item.productId] || 0;
+        updated[item.productId] = Math.max(0, cur - item.quantity);
+      });
+      return updated;
+    });
+
+    // 3. Automatically record in stock movements for each item
+    newInvoice.items.forEach((item, index) => {
+      const cur = inventory[item.productId] || 0;
+      handleAddStockMovement({
+        id: `mov_${Date.now()}_${index}`,
+        date: new Date().toLocaleString('ar-EG'),
+        type: 'out_invoice',
+        productId: item.productId,
+        productName: item.name,
+        quantityChange: -item.quantity,
+        previousStock: cur,
+        newStock: Math.max(0, cur - item.quantity),
+        reference: `منصرف فاتورة مبيعات رقم ${newInvoice.invoiceNumber}`,
+        notes: `العميل: ${newInvoice.customerName} (${newInvoice.paymentMethod})`
+      });
+    });
+  };
+
+  const handleCancelInvoice = (invoiceId) => {
+    const invoice = invoices.find((i) => i.id === invoiceId);
+    if (!invoice) return;
+
+    // Return items to inventory
+    setInventory((prev) => {
+      const updated = { ...prev };
+      invoice.items.forEach((item) => {
+        updated[item.productId] = (updated[item.productId] || 0) + item.quantity;
+      });
+      return updated;
+    });
+
+    // Record return movement
+    invoice.items.forEach((item, index) => {
+      const cur = inventory[item.productId] || 0;
+      handleAddStockMovement({
+        id: `mov_cancel_${Date.now()}_${index}`,
+        date: new Date().toLocaleString('ar-EG'),
+        type: 'in_return',
+        productId: item.productId,
+        productName: item.name,
+        quantityChange: item.quantity,
+        previousStock: cur,
+        newStock: cur + item.quantity,
+        reference: `مرتجع إلغاء فاتورة ${invoice.invoiceNumber}`,
+        notes: `تم إلغاء الفاتورة واسترجاع البضاعة للمخزن`
+      });
+    });
+
+    // Remove invoice
+    setInvoices((prev) => prev.filter((i) => i.id !== invoiceId));
   };
 
   // Filtered products
@@ -379,6 +580,20 @@ export default function App() {
         onAddWholesaleMerchant={handleRegisterWholesale}
         onDeleteWholesaleMerchant={handleDeleteWholesaleMerchant}
         onClearOrders={handleClearOrders}
+        // New Props
+        inventory={inventory}
+        onUpdateStock={handleUpdateStock}
+        stockMovements={stockMovements}
+        onAddStockMovement={handleAddStockMovement}
+        workers={workers}
+        onAddWorker={handleAddWorker}
+        onDeleteWorker={handleDeleteWorker}
+        productionLogs={productionLogs}
+        onLogProduction={handleLogProduction}
+        onDeleteProductionLog={handleDeleteProductionLog}
+        invoices={invoices}
+        onCreateInvoice={handleCreateInvoice}
+        onCancelInvoice={handleCancelInvoice}
       />
 
       {/* Floating Call & WhatsApp Pill Button */}

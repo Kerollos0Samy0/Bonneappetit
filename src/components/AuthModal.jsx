@@ -68,8 +68,16 @@ export default function AuthModal({
     e.preventDefault();
     setError('');
 
-    const { username, password: adminPass } = BUSINESS_INFO.adminCredentials;
-    if (phone.trim() === username && password === adminPass) {
+    const savedAdmin = (() => {
+      try {
+        const s = localStorage.getItem('bonne_appetit_admin_creds');
+        return s ? JSON.parse(s) : BUSINESS_INFO.adminCredentials;
+      } catch (err) {
+        return BUSINESS_INFO.adminCredentials;
+      }
+    })();
+
+    if (phone.trim() === savedAdmin.username && password === savedAdmin.password) {
       onLoginSuccess({
         role: 'admin',
         name: 'إدارة بونابيتي',
@@ -77,7 +85,7 @@ export default function AuthModal({
       });
       onClose();
     } else {
-      setError('بيانات دخول الإدارة غير صحيحة (اسم المستخدم: admin / كلمة المرور: 123)');
+      setError('اسم المستخدم أو كلمة المرور غير صحيحة. برجاء التأكد والمحاولة مرة أخرى.');
     }
   };
 
@@ -222,8 +230,9 @@ export default function AuthModal({
               </div>
             </div>
 
-            <div className="p-2.5 bg-stone-100 rounded-lg border border-stone-200 text-[11px] text-stone-700">
-              🔑 بيانات دخول الإدارة: اسم المستخدم: <strong className="font-mono">admin</strong> | كلمة المرور: <strong className="font-mono">123</strong>
+            <div className="p-2.5 bg-amber-50 rounded-lg border border-amber-200 text-[11px] text-amber-800 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>منطقة دخول مخصصة لإدارة بونابيتي فقط.</span>
             </div>
 
             <button

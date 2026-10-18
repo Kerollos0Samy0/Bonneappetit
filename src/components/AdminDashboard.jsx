@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Users, Percent, DollarSign, CheckCircle2, Clock, Truck, MessageCircle, Trash2, Save, UserPlus } from 'lucide-react';
-import { BUSINESS_INFO } from '../data/products';
+import { 
+  X, ShoppingBag, Users, Percent, DollarSign, CheckCircle2, Clock, 
+  Truck, MessageCircle, Trash2, Save, UserPlus, Boxes, UserCheck, 
+  Receipt, ArrowDownRight, Package, ArrowUpRight, Lock, ShieldCheck, Key, Eye, EyeOff
+} from 'lucide-react';
+import { BUSINESS_INFO, PRODUCTS } from '../data/products';
+import InventoryManager from './admin/InventoryManager';
+import WorkersManager from './admin/WorkersManager';
+import InvoicesManager from './admin/InvoicesManager';
+import InvoiceViewModal from './admin/InvoiceViewModal';
 
 export default function AdminDashboard({
   isOpen,
@@ -13,11 +21,31 @@ export default function AdminDashboard({
   onToggleUserApproval,
   onAddWholesaleMerchant,
   onDeleteWholesaleMerchant,
-  onClearOrders
+  onClearOrders,
+  // New Admin Capabilities
+  inventory,
+  onUpdateStock,
+  stockMovements,
+  onAddStockMovement,
+  workers,
+  onAddWorker,
+  onDeleteWorker,
+  productionLogs,
+  onLogProduction,
+  onDeleteProductionLog,
+  invoices,
+  onCreateInvoice,
+  onCancelInvoice
 }) {
   if (!isOpen) return null;
 
-  const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'discount' | 'merchants'
+  // Tabs: 'inventory' | 'workers' | 'invoices' | 'orders' | 'merchants' | 'discount'
+  const [activeTab, setActiveTab] = useState('inventory');
+  
+  // Invoice View Modal state
+  const [selectedInvoiceForView, setSelectedInvoiceForView] = useState(null);
+
+  // Wholesale Discount State
   const [newDiscount, setNewDiscount] = useState(wholesaleDiscountPct);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -27,11 +55,61 @@ export default function AdminDashboard({
   const [newMerchantPassword, setNewMerchantPassword] = useState('');
   const [newMerchantDiscount, setNewMerchantDiscount] = useState(wholesaleDiscountPct);
   const [merchantSuccessMsg, setMerchantSuccessMsg] = useState('');
-  const [merchantErrorMsg, setMerchantErrorMsg] = useState('');
+  // Admin Password Management State
+  const [adminUsername, setAdminUsername] = useState(() => {
+    try {
+      const s = localStorage.getItem('bonne_appetit_admin_creds');
+      return s ? JSON.parse(s).username : BUSINESS_INFO.adminCredentials.username;
+    } catch (e) {
+      return BUSINESS_INFO.adminCredentials.username;
+    }
+  });
 
-  // Statistics
+  const [currentAdminPassword, setCurrentAdminPassword] = useState(() => {
+    try {
+      const s = localStorage.getItem('bonne_appetit_admin_creds');
+      return s ? JSON.parse(s).password : BUSINESS_INFO.adminCredentials.password;
+    } catch (e) {
+      return BUSINESS_INFO.adminCredentials.password;
+    }
+  });
+
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [passwordSuccessMsg, setPasswordSuccessMsg] = useState('');
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleUpdateAdminPassword = (e) => {
+    e.preventDefault();
+    setPasswordErrorMsg('');
+    setPasswordSuccessMsg('');
+
+    if (newAdminPassword.length < 8) {
+      setPasswordErrorMsg('كلمة المرور يجب أن تتكون من 8 أحرف ورموز على الأقل لضمان الأمان');
+      return;
+    }
+
+    const updatedCreds = {
+      username: adminUsername,
+      password: newAdminPassword
+    };
+
+    try {
+      localStorage.setItem('bonne_appetit_admin_creds', JSON.stringify(updatedCreds));
+      setCurrentAdminPassword(newAdminPassword);
+      setNewAdminPassword('');
+      setPasswordSuccessMsg('✓ تم تحديث كلمة مرور الإدارة بنجاح وحفظها بأمان!');
+      setTimeout(() => setPasswordSuccessMsg(''), 4000);
+    } catch (err) {
+      setPasswordErrorMsg('حدث خطأ أثناء حفظ كلمة المرور');
+    }
+  };
+
+  // Overall Quick Stats
   const totalOrdersCount = orders.length;
-  const totalRevenue = orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
+  const totalInvoicesCount = invoices.length;
+  const totalRevenue = invoices.reduce((acc, i) => acc + (i.total || 0), 0) + orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
+  const totalUnitsInStock = Object.values(inventory || {}).reduce((acc, q) => acc + (q || 0), 0);
   const totalWholesaleMerchants = wholesaleUsers.filter((u) => u.approved).length;
 
   const handleSaveDiscount = (e) => {
@@ -85,117 +163,208 @@ export default function AdminDashboard({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
       <div
-        className="bg-white rounded-3xl max-w-5xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-stone-200 relative my-6 flex flex-col"
+        className="bg-white rounded-3xl max-w-6xl w-full max-h-[94vh] overflow-y-auto shadow-2xl border border-stone-200 relative my-4 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Main Header */}
         <div className="p-5 border-b border-stone-200 flex items-center justify-between bg-stone-900 text-white rounded-t-3xl">
           <div>
-            <span className="text-xs font-bold text-brand-400 bg-stone-800 px-2.5 py-0.5 rounded border border-stone-700">
-              لوحة الإدارة
-            </span>
-            <h2 className="text-xl font-black mt-1">
-              إدارة متجر بونابيتي (Bonne Appetit)
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-brand-400 bg-stone-800 px-2.5 py-0.5 rounded border border-stone-700">
+                لوحة تحكم الإدارة الكاملة
+              </span>
+              <span className="text-xs text-stone-400 font-mono">ERP & POS</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black mt-1">
+              إدارة بونابيتي <span className="text-brand-500 font-serif">Bonne Appetit</span>
             </h2>
-            <p className="text-xs text-stone-400">
-              متابعة الأوردرات وتحديد خصومات تجار الجملة واعتماد الكانتينات
+            <p className="text-xs text-stone-400 mt-0.5">
+              المخزن المركزي • تسجيل إنتاج العمال • إصدار الفواتير • الطلبات وحسابات الجملة
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-300 flex items-center justify-center transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-5 bg-stone-50 border-b border-stone-200 text-xs">
-          <div className="bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">إجمالي الأوردرات</span>
+        {/* Global Summary Stats Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-stone-50 border-b border-stone-200 text-xs">
+          <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs">
+            <span className="text-stone-500 font-medium block mb-1">رصيد المخزن الحالي</span>
             <div className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-brand-600" />
-              <span className="text-xl font-black text-stone-900">{totalOrdersCount}</span>
+              <Boxes className="w-4 h-4 text-brand-600" />
+              <span className="text-xl font-black text-stone-900 font-mono">{totalUnitsInStock}</span>
+              <span className="text-[11px] text-stone-400">طبق / وحدة</span>
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs">
+          <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs">
             <span className="text-stone-500 font-medium block mb-1">إجمالي المبيعات</span>
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-emerald-600" />
-              <span className="text-xl font-black text-emerald-700">{totalRevenue} ج.م</span>
+              <span className="text-xl font-black text-emerald-700 font-mono">{totalRevenue.toLocaleString()} ج.م</span>
             </div>
           </div>
 
-          <div className="bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs">
+          <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs">
+            <span className="text-stone-500 font-medium block mb-1">الفواتير والأوردرات</span>
+            <div className="flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-indigo-600" />
+              <span className="text-xl font-black text-stone-900 font-mono">{totalInvoicesCount + totalOrdersCount}</span>
+              <span className="text-[11px] text-stone-400">عملية</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs">
             <span className="text-stone-500 font-medium block mb-1">تجار الجملة المعتمدين</span>
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-600" />
-              <span className="text-xl font-black text-stone-900">{totalWholesaleMerchants}</span>
-            </div>
-          </div>
-
-          <div className="bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">نسبة خصم الجملة الحالية</span>
-            <div className="flex items-center gap-2">
-              <Percent className="w-4 h-4 text-amber-600" />
-              <span className="text-xl font-black text-amber-700">{wholesaleDiscountPct}%</span>
+              <Users className="w-4 h-4 text-amber-600" />
+              <span className="text-xl font-black text-stone-900 font-mono">{totalWholesaleMerchants}</span>
+              <span className="text-[11px] text-stone-400">كانتين / محل</span>
             </div>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-stone-200 px-5 text-xs font-bold bg-white">
+        {/* Navigation Tabs Bar */}
+        <div className="flex overflow-x-auto border-b border-stone-200 px-4 text-xs font-bold bg-white scrollbar-none">
+          
+          {/* TAB: Inventory */}
+          <button
+            onClick={() => setActiveTab('inventory')}
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'inventory'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <Boxes className="w-4 h-4" />
+            <span>المخزن والجرد</span>
+          </button>
+
+          {/* TAB: Workers Production */}
+          <button
+            onClick={() => setActiveTab('workers')}
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'workers'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <UserCheck className="w-4 h-4" />
+            <span>إنتاج العمال (+ المخزن)</span>
+          </button>
+
+          {/* TAB: Invoices & POS */}
+          <button
+            onClick={() => setActiveTab('invoices')}
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'invoices'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <Receipt className="w-4 h-4" />
+            <span>قسم الفواتير (- المخزن)</span>
+          </button>
+
+          {/* TAB: Online Orders */}
           <button
             onClick={() => setActiveTab('orders')}
-            className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
               activeTab === 'orders'
-                ? 'border-brand-500 text-brand-600'
-                : 'border-transparent text-stone-500 hover:text-stone-800'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
             }`}
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>سجل الأوردرات ({orders.length})</span>
+            <span>طلبات الموقع ({orders.length})</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('discount')}
-            className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 ${
-              activeTab === 'discount'
-                ? 'border-brand-500 text-brand-600'
-                : 'border-transparent text-stone-500 hover:text-stone-800'
-            }`}
-          >
-            <Percent className="w-4 h-4" />
-            <span>إعدادات نسبة خصم الجملة</span>
-          </button>
-
+          {/* TAB: Merchants */}
           <button
             onClick={() => setActiveTab('merchants')}
-            className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
               activeTab === 'merchants'
-                ? 'border-brand-500 text-brand-600'
-                : 'border-transparent text-stone-500 hover:text-stone-800'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>إدارة حسابات تجار الجملة ({wholesaleUsers.length})</span>
+            <span>تجار الجملة ({wholesaleUsers.length})</span>
+          </button>
+
+          {/* TAB: Settings & Security */}
+          <button
+            onClick={() => setActiveTab('discount')}
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'discount'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>الإعدادات والأمان</span>
           </button>
         </div>
 
-        {/* Content Area */}
+        {/* Dynamic Content Area */}
         <div className="p-5 flex-1 overflow-y-auto">
           
-          {/* TAB 1: Orders Log */}
+          {/* TAB 1: Inventory & Stock */}
+          {activeTab === 'inventory' && (
+            <InventoryManager
+              inventory={inventory}
+              onUpdateStock={onUpdateStock}
+              stockMovements={stockMovements}
+              onAddStockMovement={onAddStockMovement}
+            />
+          )}
+
+          {/* TAB 2: Workers Production */}
+          {activeTab === 'workers' && (
+            <WorkersManager
+              workers={workers}
+              onAddWorker={onAddWorker}
+              onDeleteWorker={onDeleteWorker}
+              productionLogs={productionLogs}
+              onLogProduction={onLogProduction}
+              onDeleteProductionLog={onDeleteProductionLog}
+              inventory={inventory}
+            />
+          )}
+
+          {/* TAB 3: Invoices & POS */}
+          {activeTab === 'invoices' && (
+            <InvoicesManager
+              invoices={invoices}
+              onCreateInvoice={onCreateInvoice}
+              onCancelInvoice={onCancelInvoice}
+              inventory={inventory}
+              wholesaleUsers={wholesaleUsers}
+              wholesaleDiscountPct={wholesaleDiscountPct}
+              onOpenInvoiceView={(inv) => setSelectedInvoiceForView(inv)}
+            />
+          )}
+
+          {/* TAB 4: Website Orders Log */}
           {activeTab === 'orders' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-stone-900 text-sm">
-                  الأوردرات الواردة من الموقع والواتساب
-                </h3>
+                <div>
+                  <h3 className="font-bold text-stone-900 text-sm">
+                    الأوردرات الواردة من المتجر الإلكتروني وواتساب
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    الطلبات المباشرة التي يقوم العملاء بإرسالها من سلة الموقع.
+                  </p>
+                </div>
+
                 {orders.length > 0 && (
                   <button
                     onClick={onClearOrders}
@@ -249,47 +418,49 @@ export default function AdminDashboard({
                             )}
                           </td>
                           <td className="p-3 font-mono" dir="ltr">
-                            {order.phone}
+                            <a
+                              href={`tel:${order.phone}`}
+                              className="text-stone-700 hover:text-brand-600 font-bold"
+                            >
+                              {order.phone}
+                            </a>
                           </td>
-                          <td className="p-3">
-                            <span className="font-bold text-stone-800 block">
-                              {order.itemsCount} صنف ({order.totalWeight} كجم)
-                            </span>
-                            <span className="text-[11px] text-stone-500 line-clamp-1" title={order.itemsSummary}>
-                              {order.itemsSummary}
+                          <td className="p-3 max-w-xs">
+                            <p className="line-clamp-2 text-stone-700">{order.itemsSummary}</p>
+                            <span className="text-[11px] font-bold text-brand-600 mt-0.5 inline-block">
+                              الوزن الإجمالي: {order.totalWeight} كجم
                             </span>
                           </td>
-                          <td className="p-3 font-black text-stone-900">
+                          <td className="p-3 font-mono font-bold text-stone-900 text-sm">
                             {order.totalAmount} ج.م
                           </td>
                           <td className="p-3">
-                            <select
-                              value={order.status || 'جديد'}
-                              onChange={(e) => onUpdateOrderStatus(order.id, e.target.value)}
-                              className={`text-[11px] font-bold px-2 py-1 rounded border focus:outline-none ${
-                                order.status === 'تم التسليم'
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-bold inline-block ${
+                                order.status === 'جديد'
+                                  ? 'bg-blue-100 text-blue-700'
                                   : order.status === 'قيد التجهيز'
-                                  ? 'bg-sky-50 text-sky-800 border-sky-300'
-                                  : 'bg-amber-50 text-amber-800 border-amber-300'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : order.status === 'تم الشحن'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-emerald-100 text-emerald-800'
                               }`}
                             >
-                              <option value="جديد">جديد 🟡</option>
-                              <option value="قيد التجهيز">قيد التجهيز 🔵</option>
-                              <option value="تم التسليم">تم التسليم 🟢</option>
-                            </select>
+                              {order.status}
+                            </span>
                           </td>
                           <td className="p-3 text-center">
-                            <a
-                              href={`https://wa.me/${order.phone.replace(/^0/, '20')}?text=${encodeURIComponent(`مرحباً أستاذ ${order.clientName}، بخصوص أوردر بونابيتي رقم ${order.id}`)}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-[10px] font-bold"
-                              title="مراسلة العميل واتساب"
+                            <select
+                              value={order.status}
+                              onChange={(e) => onUpdateOrderStatus(order.id, e.target.value)}
+                              className="p-1 border border-stone-300 rounded text-xs bg-white focus:outline-none"
                             >
-                              <MessageCircle className="w-3 h-3" />
-                              <span>مراسلة</span>
-                            </a>
+                              <option value="جديد">جديد</option>
+                              <option value="قيد التجهيز">قيد التجهيز</option>
+                              <option value="تم الشحن">تم الشحن</option>
+                              <option value="مكتمل ومستلم">مكتمل ومستلم</option>
+                              <option value="ملغي">ملغي</option>
+                            </select>
                           </td>
                         </tr>
                       ))}
@@ -300,63 +471,9 @@ export default function AdminDashboard({
             </div>
           )}
 
-          {/* TAB 2: Wholesale Discount Settings */}
-          {activeTab === 'discount' && (
-            <div className="max-w-md mx-auto py-6 space-y-5 text-xs">
-              <div className="text-right">
-                <h3 className="font-bold text-stone-900 text-base">تعديل نسبة خصم تجار الجملة</h3>
-                <p className="text-stone-500 text-xs mt-1">
-                  هذه النسبة ستُطبق تلقائياً على حسابات جميع تجار الجملة والكانتينات المسجلين عند تسجيل دخولهم.
-                </p>
-              </div>
-
-              <form onSubmit={handleSaveDiscount} className="bg-stone-50 p-5 rounded-2xl border border-stone-200 space-y-4">
-                <div>
-                  <label className="block font-bold text-stone-800 mb-2">
-                    نسبة الخصم المئوية (%):
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min="0"
-                      max="70"
-                      value={newDiscount}
-                      onChange={(e) => setNewDiscount(e.target.value)}
-                      className="w-24 px-3 py-2 border border-stone-300 rounded-lg text-base font-black text-center font-mono focus:border-brand-500 focus:outline-none"
-                    />
-                    <span className="text-sm font-bold text-stone-700">% خصم على أسعار المنتجات</span>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 leading-relaxed text-[11px]">
-                  💡 <strong>مثال على الخصم ({newDiscount}%):</strong>
-                  <br />
-                  طبق محشي ورق عنب (السعر الأصلي: 180 ج.م) ⬅️ يصبح لتاجر الجملة:{' '}
-                  <strong>{(180 * (1 - newDiscount / 100)).toFixed(0)} جنيه مصري</strong>!
-                </div>
-
-                {saveSuccess && (
-                  <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold text-center">
-                    ✓ تم حفظ وتحديث نسبة الخصم بنجاح!
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>حفظ نسبة الخصم وتطبيقها فوراً</span>
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* TAB 3: Wholesale Merchants List & Registration */}
+          {/* TAB 5: Wholesale Merchants */}
           {activeTab === 'merchants' && (
             <div className="space-y-6">
-              
-              {/* Form to Add New Wholesale Merchant */}
               <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-stone-900 text-white flex items-center justify-center">
@@ -532,6 +649,146 @@ export default function AdminDashboard({
                   </table>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB 6: Settings & Security */}
+          {activeTab === 'discount' && (
+            <div className="max-w-3xl mx-auto py-6 space-y-6">
+              
+              {/* Security & Admin Password Card */}
+              <div className="bg-white border-2 border-stone-800 rounded-3xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-xl bg-stone-900 text-brand-400 flex items-center justify-center font-bold">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-stone-900 text-base">
+                        أمان لوحة التحكم (بيانات دخول الإدارة)
+                      </h3>
+                      <p className="text-xs text-stone-500">
+                        حماية لوحة التحكم بكلمة مرور معقدة وتغييرها في أي وقت.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold bg-stone-100 text-stone-800 px-3 py-1 rounded-full border border-stone-200">
+                    أمان عالي 🔒
+                  </span>
+                </div>
+
+                {/* Current Active Credentials Display */}
+                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 text-xs space-y-2">
+                  <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">
+                    بيانات الاعتماد النشطة حالياً:
+                  </span>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="bg-white p-3 rounded-xl border border-stone-200">
+                      <span className="text-stone-400 text-[11px] block">اسم المستخدم:</span>
+                      <strong className="font-mono text-sm text-stone-900">{adminUsername}</strong>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl border border-stone-200 flex items-center justify-between">
+                      <div>
+                        <span className="text-stone-400 text-[11px] block">كلمة المرور الحالية:</span>
+                        <strong className="font-mono text-sm text-brand-600" dir="ltr">
+                          {showPassword ? currentAdminPassword : '••••••••••••••••'}
+                        </strong>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-stone-400 hover:text-stone-700 p-1"
+                        title={showPassword ? 'إخفاء' : 'إظهار'}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Change Password Form */}
+                <form onSubmit={handleUpdateAdminPassword} className="space-y-3 pt-2 text-xs">
+                  <h4 className="font-bold text-stone-800 text-xs">تعيين كلمة مرور جديدة:</h4>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-2">
+                    <div className="relative w-full">
+                      <Key className="w-4 h-4 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        required
+                        value={newAdminPassword}
+                        onChange={(e) => setNewAdminPassword(e.target.value)}
+                        placeholder="أدخل كلمة المرور الجديدة المعقدة..."
+                        className="w-full pr-9 pl-3 py-2.5 rounded-xl border border-stone-300 font-mono text-xs focus:outline-hidden focus:border-brand-500 bg-white"
+                        dir="ltr"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto px-6 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold rounded-xl transition-all shadow-xs shrink-0 flex items-center justify-center gap-1.5"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>تحديث كلمة المرور</span>
+                    </button>
+                  </div>
+
+                  {passwordSuccessMsg && (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-bold flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{passwordSuccessMsg}</span>
+                    </div>
+                  )}
+
+                  {passwordErrorMsg && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl font-bold">
+                      {passwordErrorMsg}
+                    </div>
+                  )}
+                </form>
+              </div>
+
+              {/* Wholesale Discount Form */}
+              <form onSubmit={handleSaveDiscount} className="bg-stone-50 border border-stone-200 rounded-3xl p-6 space-y-4 shadow-xs">
+                <div className="flex items-center gap-2">
+                  <Percent className="w-5 h-5 text-brand-600" />
+                  <h3 className="font-bold text-stone-900 text-base">
+                    تعديل نسبة خصم الجملة الافتراضية
+                  </h3>
+                </div>
+
+                <p className="text-stone-600 text-xs leading-relaxed">
+                  هذه النسبة تُطبق تلقائياً على حسابات تجار الجملة الجدد عند تسجيلهم، وتظهر لهم الأسعار مخفضة فور تسجيل الدخول.
+                </p>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max="80"
+                    value={newDiscount}
+                    onChange={(e) => setNewDiscount(e.target.value)}
+                    className="w-28 text-center text-lg font-mono font-bold p-2.5 border border-stone-300 rounded-xl bg-white focus:outline-none focus:border-brand-500"
+                  />
+                  <span className="text-lg font-black text-stone-700">%</span>
+                </div>
+
+                {saveSuccess && (
+                  <div className="text-emerald-700 text-xs font-bold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+                    ✓ تم حفظ نسبة الخصم بنجاح وتحديث المتجر بالكامل!
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 px-6 rounded-xl text-xs flex items-center gap-1.5 transition-colors shadow-xs"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>حفظ نسبة الخصم</span>
+                </button>
+              </form>
 
             </div>
           )}
@@ -543,12 +800,21 @@ export default function AdminDashboard({
           <span>هاتف إدارة بونابيتي المعتمد: {BUSINESS_INFO.phoneDisplay}</span>
           <button
             onClick={onClose}
-            className="bg-stone-900 text-white px-4 py-1.5 rounded-lg font-bold text-xs hover:bg-stone-800"
+            className="bg-stone-900 text-white px-5 py-2 rounded-xl font-bold text-xs hover:bg-stone-800 transition-colors"
           >
             إغلاق لوحة التحكم
           </button>
         </div>
       </div>
+
+      {/* Invoice View Modal */}
+      {selectedInvoiceForView && (
+        <InvoiceViewModal
+          invoice={selectedInvoiceForView}
+          isOpen={!!selectedInvoiceForView}
+          onClose={() => setSelectedInvoiceForView(null)}
+        />
+      )}
     </div>
   );
 }
