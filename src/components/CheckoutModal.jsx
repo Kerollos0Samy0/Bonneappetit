@@ -49,11 +49,11 @@ export default function CheckoutModal({
     cartItems.reduce((acc, item) => acc + (item.weightKg || 1) * item.quantity, 0).toFixed(1)
   );
 
-  let shippingTier = lang === 'en' ? 'Standard Shipping (Client)' : 'شحن عادي (100% عميل)';
+  let shippingTier = lang === 'en' ? 'Standard Shipping (Calculated by address)' : 'شحن عادي (حسب العنوان)';
   if (totalWeight >= 20) {
-    shippingTier = lang === 'en' ? '100% Free Shipping (Paid by Bonne Appetit)' : 'شحن مجاني 100% (تتحمله بونابيتي)';
+    shippingTier = lang === 'en' ? 'Free Shipping 100% (Bonne Appetit Offer)' : 'شحن مجاني 100% (عرض بونابيتي)';
   } else if (totalWeight >= 10) {
-    shippingTier = lang === 'en' ? '50% Discount on Shipping (Shared)' : 'خصم 50% على الشحن (مناصفة مع بونابيتي)';
+    shippingTier = lang === 'en' ? '50% Off Shipping (Bonne Appetit Offer)' : 'خصم 50% على الشحن (عرض بونابيتي)';
   }
 
   const handleChange = (e) => {
@@ -73,40 +73,51 @@ export default function CheckoutModal({
     const orderId = 'BN-' + Math.floor(100000 + Math.random() * 900000);
 
     // Format the official WhatsApp Message sent directly to Bonne Appetit
-    let msg = `*طلب أوردر جديد — بونابيتي (Bonne Appetit)*\n`;
+    const isEn = lang === 'en';
+    let msg = isEn 
+      ? `*New Order Request — Bonne Appetit*\n`
+      : `*طلب أوردر جديد — بونابيتي (Bonne Appetit)*\n`;
     msg += `------------------------------------\n`;
-    msg += `🧾 *رقم الطلب:* ${orderId}\n`;
-    msg += `👤 *العميل:* ${formData.clientName}\n`;
-    msg += `📱 *الموبايل:* ${formData.phone}\n`;
+    msg += `• *${isEn ? 'Order #' : 'رقم الطلب'}:* ${orderId}\n`;
+    msg += `• *${isEn ? 'Customer' : 'العميل'}:* ${formData.clientName}\n`;
+    msg += `• *${isEn ? 'Phone' : 'الموبايل'}:* ${formData.phone}\n`;
     if (isWholesale) {
-      msg += `🏷️ *نوع الحساب:* تاجر جملة / كانتين معتمد (خصم ${wholesaleDiscountPct}%)\n`;
+      msg += `• *${isEn ? 'Account' : 'نوع الحساب'}:* ${isEn ? `Wholesale Merchant (${wholesaleDiscountPct}% Discount)` : `تاجر جملة معتمد (خصم ${wholesaleDiscountPct}%)`}\n`;
     } else {
-      msg += `🏷️ *نوع الحساب:* عميل قطاعي\n`;
+      msg += `• *${isEn ? 'Account' : 'نوع الحساب'}:* ${isEn ? 'Retail Client' : 'عميل قطاعي'}\n`;
     }
-    msg += `📍 *عنوان التسليم:* ${formData.address}\n`;
-    if (formData.deliveryDate) msg += `🕒 *الموعد المطلوب:* ${formData.deliveryDate}\n`;
+    msg += `• *${isEn ? 'Delivery Address' : 'عنوان التسليم'}:* ${formData.address}\n`;
+    if (formData.deliveryDate) {
+      msg += `• *${isEn ? 'Requested Time' : 'الموعد المطلوب'}:* ${formData.deliveryDate}\n`;
+    }
 
-    msg += `\n📦 *الأصناف المطلوبة:*\n`;
+    msg += `\n*${isEn ? 'Ordered Dishes' : 'الأصناف المطلوبة'}:*\n`;
     cartItems.forEach((item, index) => {
       const itemWeight = (item.weightKg * item.quantity).toFixed(1);
-      msg += `${index + 1}) ${item.name} | الكمية: ${item.quantity} | الوزن: ${itemWeight} كجم | السعر: ${item.price * item.quantity} ج.م\n`;
+      const unitLabel = item.unit || (isEn ? 'tray' : 'طبق');
+      msg += `${index + 1}) ${item.name} × ${item.quantity} ${unitLabel} — ${item.price * item.quantity} ${isEn ? 'EGP' : 'ج.م'} [${itemWeight} ${isEn ? 'kg' : 'كجم'}]\n`;
     });
 
-    msg += `\n⚖️ *إجمالي وزن الشحنة:* ${totalWeight} كجم\n`;
-    msg += `🛵 *شريحة الشحن:* ${shippingTier}\n`;
+    msg += `------------------------------------\n`;
+    msg += `• *${isEn ? 'Total Weight' : 'إجمالي وزن الشحنة'}:* ${totalWeight} ${isEn ? 'kg' : 'كجم'}\n`;
+    msg += `• *${isEn ? 'Shipping' : 'الشحن'}:* ${shippingTier}\n`;
 
     if (isWholesale && savings > 0) {
-      msg += `💰 *إجمالي السعر الأصلي:* ${originalTotal} ج.م\n`;
-      msg += `🎁 *خصم تاجر الجملة (${wholesaleDiscountPct}%):* -${savings} ج.م\n`;
-      msg += `💵 *المطلوب سداده بعد الخصم:* ${totalAmount} جنيه مصري\n`;
+      msg += `• *${isEn ? 'Original Subtotal' : 'السعر قبل الخصم'}:* ${originalTotal} ${isEn ? 'EGP' : 'ج.م'}\n`;
+      msg += `• *${isEn ? 'Wholesale Discount' : 'خصم الجملة'} (${wholesaleDiscountPct}%):* -${savings} ${isEn ? 'EGP' : 'ج.م'}\n`;
+      msg += `• *${isEn ? 'Total Due' : 'المطلوب سداده بعد الخصم'}:* ${totalAmount} ${isEn ? 'EGP' : 'جنيه مصري'}\n`;
     } else {
-      msg += `💵 *إجمالي الفاتورة المطلوبة:* ${totalAmount} جنيه مصري\n`;
+      msg += `• *${isEn ? 'Total Due' : 'إجمالي الفاتورة المطلوبة'}:* ${totalAmount} ${isEn ? 'EGP' : 'جنيه مصري'}\n`;
     }
 
-    if (formData.notes) msg += `📝 *ملاحظات:* ${formData.notes}\n`;
+    if (formData.notes && formData.notes.trim()) {
+      msg += `• *${isEn ? 'Notes' : 'ملاحظات'}:* ${formData.notes.trim()}\n`;
+    }
 
-    msg += `\n------------------------------------\n`;
-    msg += `*برجاء تأكيد استلام الأوردر وتحديد موعد خروج المندوب والتسليم.*`;
+    msg += `------------------------------------\n`;
+    msg += isEn
+      ? `*Please confirm order receipt and coordinate delivery schedule.*`
+      : `*برجاء تأكيد استلام الأوردر وتحديد موعد خروج المندوب والتسليم.*`;
 
     // Construct direct WhatsApp link to Bonne Appetit official phone
     const url = `https://wa.me/${BUSINESS_INFO.whatsapp}?text=${encodeURIComponent(msg)}`;
