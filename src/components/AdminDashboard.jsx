@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { BUSINESS_INFO, PRODUCTS } from '../data/products';
 import { playLoudOrderAlert, requestDesktopNotificationPermission, getNotificationPermissionStatus } from '../utils/orderNotifier';
+import { UI_TRANSLATIONS } from '../data/translations';
 import InventoryManager from './admin/InventoryManager';
 import WorkersManager from './admin/WorkersManager';
 import InvoicesManager from './admin/InvoicesManager';
@@ -49,9 +50,13 @@ export default function AdminDashboard({
   onResetProducts,
   businessInfo,
   onUpdateBusinessInfo,
-  initialTab = 'inventory'
+  initialTab = 'inventory',
+  lang = 'ar',
+  onToggleLang
 }) {
   if (!isOpen) return null;
+
+  const t = UI_TRANSLATIONS[lang] || UI_TRANSLATIONS.ar;
 
   // Tabs: 'inventory' | 'catalog' | 'workers' | 'invoices' | 'orders' | 'merchants' | 'discount'
   const [activeTab, setActiveTab] = useState(initialTab || 'inventory');
@@ -229,7 +234,10 @@ export default function AdminDashboard({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-100 flex flex-col w-screen h-screen overflow-hidden">
+    <div 
+      className="fixed inset-0 z-50 bg-stone-100 flex flex-col w-screen h-screen overflow-hidden"
+      dir={lang === 'ar' ? 'rtl' : 'ltr'}
+    >
       
       {/* Top Navbar Header */}
       <header className="bg-stone-900 text-white px-4 sm:px-8 py-3.5 border-b border-stone-800 flex items-center justify-between shrink-0 shadow-md">
@@ -240,43 +248,58 @@ export default function AdminDashboard({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-xl font-black tracking-tight">
-                لوحة تحكم إدارة بونابيتي <span className="text-brand-400 font-serif">Bonne Appetit</span>
+                {t.adminTitle} <span className="text-brand-400 font-serif">Bonne Appetit</span>
               </h1>
               <span className="hidden sm:inline-block text-[11px] font-bold text-brand-300 bg-stone-800 px-2.5 py-0.5 rounded border border-stone-700 font-mono">
-                ERP & POS المركزي
+                {t.adminBadge}
               </span>
             </div>
             <p className="text-[11px] text-stone-400 hidden sm:block">
-              المخزن المركزي • تسجيل إنتاج العمال • إصدار الفواتير • الطلبات وحسابات الجملة
+              {t.adminSubtitle}
             </p>
           </div>
         </div>
 
         {/* Top Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Test Chime Button */}
           <button
             type="button"
             onClick={handleTestChime}
             className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all shadow-xs"
-            title="تجربة صوت تنبيه الأوردرات الجديد (رنة المطاعم العالية)"
+            title={lang === 'en' ? 'Test loud restaurant order chime' : 'تجربة صوت تنبيه الأوردرات الجديد (رنة المطاعم العالية)'}
           >
             <Volume2 className={`w-3.5 h-3.5 ${isTestingSound ? 'animate-bounce text-amber-200' : ''}`} />
-            <span className="hidden sm:inline">{isTestingSound ? 'جاري التشغيل...' : 'تجربة صوت التنبيه'}</span>
-            <span className="sm:hidden">صوت 🔊</span>
+            <span className="hidden sm:inline">{isTestingSound ? t.adminSoundPlaying : t.adminTestSound}</span>
+            <span className="sm:hidden">{t.adminSoundMobile}</span>
           </button>
 
+          {/* Language Switcher */}
+          {onToggleLang && (
+            <button
+              type="button"
+              onClick={onToggleLang}
+              className="flex items-center gap-1.5 px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+              title={lang === 'ar' ? 'Switch to English' : 'التحويل للغة العربية'}
+            >
+              <Globe className="w-3.5 h-3.5 text-brand-400" />
+              <span>{lang === 'ar' ? 'English 🇬🇧' : 'العربية 🇪🇬'}</span>
+            </button>
+          )}
+
+          {/* Return to Store */}
           <button
             onClick={onClose}
             className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition-all border border-stone-700 shadow-xs"
           >
-            <span>الرجوع للمتجر</span>
+            <span>{t.adminBackToStore}</span>
             <span className="text-sm">🏪</span>
           </button>
 
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition-colors border border-stone-700"
-            title="إغلاق لوحة التحكم والرجوع للمتجر"
+            title={t.adminCloseTooltip}
           >
             <X className="w-5 h-5" />
           </button>
@@ -287,37 +310,37 @@ export default function AdminDashboard({
       <div className="bg-white border-b border-stone-200 px-4 sm:px-8 py-3 shrink-0">
         <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">رصيد المخزن الحالي</span>
+            <span className="text-stone-500 font-medium block mb-1">{t.adminStockBalance}</span>
             <div className="flex items-center gap-2">
               <Boxes className="w-4 h-4 text-brand-600" />
               <span className="text-xl font-black text-stone-900 font-mono">{totalUnitsInStock}</span>
-              <span className="text-[11px] text-stone-400">طبق / وحدة</span>
+              <span className="text-[11px] text-stone-400">{t.adminDishUnit}</span>
             </div>
           </div>
 
           <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">إجمالي المبيعات</span>
+            <span className="text-stone-500 font-medium block mb-1">{t.adminTotalSales}</span>
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-emerald-600" />
-              <span className="text-xl font-black text-emerald-700 font-mono">{totalRevenue.toLocaleString()} ج.م</span>
+              <span className="text-xl font-black text-emerald-700 font-mono">{totalRevenue.toLocaleString()} {t.currency}</span>
             </div>
           </div>
 
           <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">الفواتير والأوردرات</span>
+            <span className="text-stone-500 font-medium block mb-1">{t.adminInvoicesAndOrders}</span>
             <div className="flex items-center gap-2">
               <Receipt className="w-4 h-4 text-indigo-600" />
               <span className="text-xl font-black text-stone-900 font-mono">{totalInvoicesCount + totalOrdersCount}</span>
-              <span className="text-[11px] text-stone-400">عملية</span>
+              <span className="text-[11px] text-stone-400">{t.adminOperations}</span>
             </div>
           </div>
 
           <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">تجار الجملة المعتمدين</span>
+            <span className="text-stone-500 font-medium block mb-1">{t.adminApprovedWholesale}</span>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-amber-600" />
               <span className="text-xl font-black text-stone-900 font-mono">{totalWholesaleMerchants}</span>
-              <span className="text-[11px] text-stone-400">كانتين / محل</span>
+              <span className="text-[11px] text-stone-400">{t.adminCanteensStores}</span>
             </div>
           </div>
         </div>
@@ -337,7 +360,7 @@ export default function AdminDashboard({
             }`}
           >
             <Boxes className="w-4 h-4" />
-            <span>المخزن والجرد</span>
+            <span>{t.adminTabInventory}</span>
           </button>
 
           {/* TAB: Catalog & Menu */}
@@ -350,7 +373,7 @@ export default function AdminDashboard({
             }`}
           >
             <Utensils className="w-4 h-4" />
-            <span>المنيو والأصناف ({products.length})</span>
+            <span>{t.adminTabCatalog} ({products.length})</span>
           </button>
 
           {/* TAB: Workers Production */}
@@ -363,7 +386,7 @@ export default function AdminDashboard({
             }`}
           >
             <UserCheck className="w-4 h-4" />
-            <span>إنتاج العمال (+ المخزن)</span>
+            <span>{t.adminTabWorkers}</span>
           </button>
 
           {/* TAB: Invoices & POS */}
@@ -376,7 +399,7 @@ export default function AdminDashboard({
             }`}
           >
             <Receipt className="w-4 h-4" />
-            <span>قسم الفواتير (- المخزن)</span>
+            <span>{t.adminTabInvoices}</span>
           </button>
 
           {/* TAB: Online Orders */}
@@ -389,7 +412,7 @@ export default function AdminDashboard({
             }`}
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>طلبات الموقع ({safeOrders.length})</span>
+            <span>{t.adminTabOrders} ({safeOrders.length})</span>
           </button>
 
           {/* TAB: Merchants */}
@@ -402,7 +425,7 @@ export default function AdminDashboard({
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>تجار الجملة ({safeWholesaleUsers.length})</span>
+            <span>{t.adminTabMerchants} ({safeWholesaleUsers.length})</span>
           </button>
 
           {/* TAB: Settings & Security */}
@@ -415,7 +438,7 @@ export default function AdminDashboard({
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>الإعدادات والأمان</span>
+            <span>{t.adminTabSettings}</span>
           </button>
         </div>
       </div>
@@ -432,6 +455,8 @@ export default function AdminDashboard({
               onUpdateStock={onUpdateStock}
               stockMovements={stockMovements}
               onAddStockMovement={onAddStockMovement}
+              lang={lang}
+              t={t}
             />
           )}
 
@@ -445,6 +470,8 @@ export default function AdminDashboard({
               onDeleteProduct={onDeleteProduct}
               onMoveProduct={onMoveProduct}
               onResetProducts={onResetProducts}
+              lang={lang}
+              t={t}
             />
           )}
 
@@ -459,6 +486,8 @@ export default function AdminDashboard({
               onLogProduction={onLogProduction}
               onDeleteProductionLog={onDeleteProductionLog}
               inventory={inventory}
+              lang={lang}
+              t={t}
             />
           )}
 
@@ -473,6 +502,8 @@ export default function AdminDashboard({
               wholesaleUsers={wholesaleUsers}
               wholesaleDiscountPct={wholesaleDiscountPct}
               onOpenInvoiceView={(inv) => setSelectedInvoiceForView(inv)}
+              lang={lang}
+              t={t}
             />
           )}
 
@@ -489,14 +520,14 @@ export default function AdminDashboard({
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-black text-stone-900 text-sm">
-                          نظام التنبيه الصوتي والإشعارات للأوردرات الجديدة
+                          {t.adminAlertSystemTitle}
                         </h4>
                         <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300">
-                          مفعل تلقائياً 🔊
+                          {t.adminAlertSystemActive}
                         </span>
                       </div>
                       <p className="text-stone-600 text-xs mt-0.5">
-                        يصدر المتجر رنة تنبيه عالية ومميزة فور إرسال أي أوردر جديد، مع إشعار مكتبي يظهر على شاشتك حتى ولو كانت الصفحة مصغرة.
+                        {t.adminAlertSystemDesc}
                       </p>
                     </div>
                   </div>
@@ -508,7 +539,7 @@ export default function AdminDashboard({
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black rounded-xl text-xs transition-all shadow-xs"
                     >
                       <Volume2 className={`w-4 h-4 ${isTestingSound ? 'animate-bounce' : ''}`} />
-                      <span>{isTestingSound ? '🔊 الصوت يعمل الآن...' : '🔊 تجربة الصوت العالي'}</span>
+                      <span>{isTestingSound ? (lang === 'en' ? '🔊 Chime Playing...' : '🔊 الصوت يعمل الآن...') : t.adminTestLoudSound}</span>
                     </button>
 
                     <button
@@ -523,8 +554,8 @@ export default function AdminDashboard({
                       <Bell className="w-3.5 h-3.5" />
                       <span>
                         {notificationPermission === 'granted'
-                          ? 'إشعارات الشاشة: مفعلة ✓'
-                          : 'تفعيل إشعارات سطح المكتب'}
+                          ? t.adminDesktopNotifActive
+                          : t.adminEnableDesktopNotif}
                       </span>
                     </button>
                   </div>
@@ -534,10 +565,10 @@ export default function AdminDashboard({
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-stone-900 text-sm">
-                    الأوردرات الواردة من المتجر الإلكتروني وواتساب
+                    {t.adminIncomingOrdersTitle}
                   </h3>
                   <p className="text-xs text-stone-500">
-                    الطلبات المباشرة التي يقوم العملاء بإرسالها من سلة الموقع.
+                    {t.adminIncomingOrdersDesc}
                   </p>
                 </div>
 
@@ -547,29 +578,29 @@ export default function AdminDashboard({
                     className="text-stone-400 hover:text-red-500 text-xs flex items-center gap-1 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>مسح سجل الطلبات</span>
+                    <span>{t.adminClearOrders}</span>
                   </button>
                 )}
               </div>
 
               {orders.length === 0 ? (
                 <div className="text-center py-16 bg-stone-50 rounded-2xl border border-stone-200 space-y-2">
-                  <p className="font-bold text-stone-700 text-sm">لا توجد أوردرات مسجلة حتى الآن</p>
-                  <p className="text-xs text-stone-500">أي طلب يتم إرساله من الموقع أو عبر واتساب سيظهر هنا تلقائياً.</p>
+                  <p className="font-bold text-stone-700 text-sm">{t.adminNoOrders}</p>
+                  <p className="text-xs text-stone-500">{t.adminNoOrdersDesc}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto border border-stone-200 rounded-xl">
-                  <table className="w-full text-right text-xs">
+                  <table className="w-full text-start text-xs">
                     <thead className="bg-stone-100 text-stone-700 font-bold border-b border-stone-200">
                       <tr>
-                        <th className="p-3">رقم الطلب</th>
-                        <th className="p-3">العميل</th>
-                        <th className="p-3">الصفة</th>
-                        <th className="p-3">الموبايل</th>
-                        <th className="p-3">الأصناف والوزن</th>
-                        <th className="p-3">المبلغ</th>
-                        <th className="p-3">الحالة</th>
-                        <th className="p-3 text-center">إجراءات</th>
+                        <th className="p-3">{t.thOrderId}</th>
+                        <th className="p-3">{t.thCustomer}</th>
+                        <th className="p-3">{t.thAccountType}</th>
+                        <th className="p-3">{t.thPhone}</th>
+                        <th className="p-3">{t.thItemsWeight}</th>
+                        <th className="p-3">{t.thAmount}</th>
+                        <th className="p-3">{t.thStatus}</th>
+                        <th className="p-3 text-center">{t.thActions}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-200">
@@ -585,11 +616,11 @@ export default function AdminDashboard({
                           <td className="p-3">
                             {order.isWholesale ? (
                               <span className="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px] border border-amber-200">
-                                جملة (خصم {order.discountPct || wholesaleDiscountPct}%)
+                                {lang === 'en' ? `Wholesale (${order.discountPct || wholesaleDiscountPct}% off)` : `جملة (خصم ${order.discountPct || wholesaleDiscountPct}%)`}
                               </span>
                             ) : (
                               <span className="bg-stone-100 text-stone-600 font-medium px-2 py-0.5 rounded text-[10px]">
-                                عميل قطاعي
+                                {t.orderRetailLabel}
                               </span>
                             )}
                           </td>
@@ -604,11 +635,11 @@ export default function AdminDashboard({
                           <td className="p-3 max-w-xs">
                             <p className="line-clamp-2 text-stone-700">{order.itemsSummary}</p>
                             <span className="text-[11px] font-bold text-brand-600 mt-0.5 inline-block">
-                              الوزن الإجمالي: {order.totalWeight} كجم
+                              {t.orderTotalWeightLabel} {order.totalWeight} {t.kg}
                             </span>
                           </td>
                           <td className="p-3 font-mono font-bold text-stone-900 text-sm">
-                            {order.totalAmount} ج.م
+                            {order.totalAmount} {t.currency}
                           </td>
                           <td className="p-3">
                             <span
@@ -622,7 +653,11 @@ export default function AdminDashboard({
                                   : 'bg-emerald-100 text-emerald-800'
                               }`}
                             >
-                              {order.status}
+                              {order.status === 'جديد' ? t.statusNew :
+                               order.status === 'قيد التجهيز' ? t.statusPreparing :
+                               order.status === 'تم الشحن' ? t.statusShipped :
+                               order.status === 'مكتمل ومستلم' ? t.statusDelivered :
+                               order.status === 'ملغي' ? t.statusCancelled : order.status}
                             </span>
                           </td>
                           <td className="p-3 text-center">
@@ -631,11 +666,11 @@ export default function AdminDashboard({
                               onChange={(e) => onUpdateOrderStatus(order.id, e.target.value)}
                               className="p-1 border border-stone-300 rounded text-xs bg-white focus:outline-none"
                             >
-                              <option value="جديد">جديد</option>
-                              <option value="قيد التجهيز">قيد التجهيز</option>
-                              <option value="تم الشحن">تم الشحن</option>
-                              <option value="مكتمل ومستلم">مكتمل ومستلم</option>
-                              <option value="ملغي">ملغي</option>
+                              <option value="جديد">{t.statusNew}</option>
+                              <option value="قيد التجهيز">{t.statusPreparing}</option>
+                              <option value="تم الشحن">{t.statusShipped}</option>
+                              <option value="مكتمل ومستلم">{t.statusDelivered}</option>
+                              <option value="ملغي">{t.statusCancelled}</option>
                             </select>
                           </td>
                         </tr>
@@ -657,10 +692,10 @@ export default function AdminDashboard({
                   </div>
                   <div>
                     <h3 className="font-bold text-stone-900 text-sm">
-                      تسجيل تاجر جملة أو كانتين جديد
+                      {t.merchantsTitle}
                     </h3>
                     <p className="text-stone-500 text-[11px]">
-                      التسجيل حصري للإدارة فقط؛ يتم تفعيل حساب التاجر فوراً ليتمكن من الدخول واستعراض أسعار الجملة.
+                      {t.merchantsSubtitle}
                     </p>
                   </div>
                 </div>
@@ -668,11 +703,11 @@ export default function AdminDashboard({
                 <form onSubmit={handleCreateMerchant} className="space-y-3 pt-2">
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                     <div>
-                      <label className="block font-bold text-stone-700 mb-1">اسم التاجر / الكانتين *</label>
+                      <label className="block font-bold text-stone-700 mb-1">{t.merchantsNameLabel}</label>
                       <input
                         type="text"
                         required
-                        placeholder="مثال: كانتين مدرسة الرواد"
+                        placeholder={t.merchantsNamePlaceholder}
                         value={newMerchantName}
                         onChange={(e) => setNewMerchantName(e.target.value)}
                         className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:border-brand-500 bg-white"
@@ -680,11 +715,11 @@ export default function AdminDashboard({
                     </div>
 
                     <div>
-                      <label className="block font-bold text-stone-700 mb-1">رقم الموبايل (لتسجيل الدخول) *</label>
+                      <label className="block font-bold text-stone-700 mb-1">{t.merchantsPhoneLabel}</label>
                       <input
                         type="tel"
                         required
-                        placeholder="مثال: 01012345678"
+                        placeholder={t.merchantsPhonePlaceholder}
                         value={newMerchantPhone}
                         onChange={(e) => setNewMerchantPhone(e.target.value)}
                         className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:border-brand-500 bg-white font-mono"
@@ -693,11 +728,11 @@ export default function AdminDashboard({
                     </div>
 
                     <div>
-                      <label className="block font-bold text-stone-700 mb-1">كلمة المرور *</label>
+                      <label className="block font-bold text-stone-700 mb-1">{t.merchantsPasswordLabel}</label>
                       <input
                         type="text"
                         required
-                        placeholder="كلمة مرور الدخول"
+                        placeholder={t.merchantsPasswordPlaceholder}
                         value={newMerchantPassword}
                         onChange={(e) => setNewMerchantPassword(e.target.value)}
                         className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:border-brand-500 bg-white font-mono"
@@ -706,7 +741,7 @@ export default function AdminDashboard({
                     </div>
 
                     <div>
-                      <label className="block font-bold text-stone-700 mb-1">نسبة الخصم الخاصة به (%)</label>
+                      <label className="block font-bold text-stone-700 mb-1">{t.merchantsDiscountLabel}</label>
                       <input
                         type="number"
                         min="0"
@@ -737,7 +772,7 @@ export default function AdminDashboard({
                       className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2 px-5 rounded-lg text-xs flex items-center gap-1.5 transition-colors shadow-xs"
                     >
                       <UserPlus className="w-3.5 h-3.5" />
-                      <span>إضافة وتفعيل حساب التاجر فوراً</span>
+                      <span>{t.merchantsAddBtn}</span>
                     </button>
                   </div>
                 </form>
@@ -747,23 +782,23 @@ export default function AdminDashboard({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-bold text-stone-900 text-xs">
-                    قائمة تجار الجملة المسجلين ({wholesaleUsers.length})
+                    {t.merchantsListTitle} ({wholesaleUsers.length})
                   </h4>
                   <span className="text-[11px] text-stone-500">
-                    يمكنك إيقاف أو تفعيل أو حذف أي تاجر في أي وقت
+                    {t.merchantsListDesc}
                   </span>
                 </div>
 
                 <div className="overflow-x-auto border border-stone-200 rounded-xl">
-                  <table className="w-full text-right text-xs">
+                  <table className="w-full text-start text-xs">
                     <thead className="bg-stone-100 text-stone-700 font-bold border-b border-stone-200">
                       <tr>
-                        <th className="p-3">اسم التاجر / الكانتين</th>
-                        <th className="p-3">رقم الموبايل</th>
-                        <th className="p-3">كلمة المرور</th>
-                        <th className="p-3">نسبة الخصم</th>
-                        <th className="p-3">حالة الحساب</th>
-                        <th className="p-3 text-center">إجراءات</th>
+                        <th className="p-3">{t.merchantsThName}</th>
+                        <th className="p-3">{t.merchantsThPhone}</th>
+                        <th className="p-3">{t.merchantsThPassword}</th>
+                        <th className="p-3">{t.merchantsThDiscount}</th>
+                        <th className="p-3">{t.merchantsThStatus}</th>
+                        <th className="p-3 text-center">{t.thActions}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-200">
@@ -778,7 +813,7 @@ export default function AdminDashboard({
                           <td className="p-3 font-mono" dir="ltr">
                             <span className="font-bold text-stone-800 block">{user.phone}</span>
                             {user.username && (
-                              <span className="text-[10px] text-stone-400 font-sans block">اسم الدخول: {user.username}</span>
+                              <span className="text-[10px] text-stone-400 font-sans block">{lang === 'en' ? 'Username: ' : 'اسم الدخول: '}{user.username}</span>
                             )}
                           </td>
                           <td className="p-3 font-mono font-bold text-emerald-800 bg-emerald-50/50 rounded" dir="ltr">
@@ -790,11 +825,11 @@ export default function AdminDashboard({
                           <td className="p-3">
                             {user.approved ? (
                               <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">
-                                معتمد ومفعّل ✓
+                                {t.merchantsActive}
                               </span>
                             ) : (
                               <span className="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">
-                                موقوف ⏸️
+                                {t.merchantsSuspended}
                               </span>
                             )}
                           </td>
@@ -807,13 +842,13 @@ export default function AdminDashboard({
                                   : 'bg-emerald-600 text-white hover:bg-emerald-700'
                               }`}
                             >
-                              {user.approved ? 'إيقاف الخصم' : 'تفعيل'}
+                              {user.approved ? t.merchantsSuspendBtn : t.merchantsActivateBtn}
                             </button>
                             {onDeleteWholesaleMerchant && (
                               <button
                                 onClick={() => onDeleteWholesaleMerchant(user.id)}
                                 className="px-2 py-1 rounded text-[10px] text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors mr-1"
-                                title="حذف حساب التاجر"
+                                title={t.merchantsDeleteTooltip}
                               >
                                 <Trash2 className="w-3.5 h-3.5 inline" />
                               </button>
@@ -841,33 +876,33 @@ export default function AdminDashboard({
                     </div>
                     <div>
                       <h3 className="font-black text-stone-900 text-base">
-                        أمان لوحة التحكم (بيانات دخول الإدارة)
+                        {t.settingsSecurityTitle}
                       </h3>
                       <p className="text-xs text-stone-500">
-                        حماية لوحة التحكم بكلمة مرور معقدة وتغييرها في أي وقت.
+                        {t.settingsSecurityDesc}
                       </p>
                     </div>
                   </div>
                   <span className="text-xs font-bold bg-stone-100 text-stone-800 px-3 py-1 rounded-full border border-stone-200">
-                    أمان عالي 🔒
+                    {t.settingsHighSecurity}
                   </span>
                 </div>
 
                 {/* Current Active Credentials Display */}
                 <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 text-xs space-y-2">
                   <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">
-                    بيانات الاعتماد النشطة حالياً:
+                    {t.settingsActiveCreds}
                   </span>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="bg-white p-3 rounded-xl border border-stone-200">
-                      <span className="text-stone-400 text-[11px] block">اسم المستخدم:</span>
+                      <span className="text-stone-400 text-[11px] block">{t.settingsUsername}</span>
                       <strong className="font-mono text-sm text-stone-900">{adminUsername}</strong>
                     </div>
 
                     <div className="bg-white p-3 rounded-xl border border-stone-200 flex items-center justify-between">
                       <div>
-                        <span className="text-stone-400 text-[11px] block">كلمة المرور الحالية:</span>
+                        <span className="text-stone-400 text-[11px] block">{t.settingsCurrentPassword}</span>
                         <strong className="font-mono text-sm text-brand-600" dir="ltr">
                           {showPassword ? currentAdminPassword : '••••••••••••••••'}
                         </strong>
@@ -886,7 +921,7 @@ export default function AdminDashboard({
 
                 {/* Change Password Form */}
                 <form onSubmit={handleUpdateAdminPassword} className="space-y-3 pt-2 text-xs">
-                  <h4 className="font-bold text-stone-800 text-xs">تعيين كلمة مرور جديدة:</h4>
+                  <h4 className="font-bold text-stone-800 text-xs">{t.settingsNewPasswordLabel}</h4>
                   
                   <div className="flex flex-col sm:flex-row items-center gap-2">
                     <div className="relative w-full">
@@ -896,7 +931,7 @@ export default function AdminDashboard({
                         required
                         value={newAdminPassword}
                         onChange={(e) => setNewAdminPassword(e.target.value)}
-                        placeholder="أدخل كلمة المرور الجديدة المعقدة..."
+                        placeholder={t.settingsNewPasswordPlaceholder}
                         className="w-full pr-9 pl-3 py-2.5 rounded-xl border border-stone-300 font-mono text-xs focus:outline-hidden focus:border-brand-500 bg-white"
                         dir="ltr"
                       />
@@ -907,7 +942,7 @@ export default function AdminDashboard({
                       className="w-full sm:w-auto px-6 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold rounded-xl transition-all shadow-xs shrink-0 flex items-center justify-center gap-1.5"
                     >
                       <Save className="w-3.5 h-3.5" />
-                      <span>تحديث كلمة المرور</span>
+                      <span>{t.settingsUpdatePasswordBtn}</span>
                     </button>
                   </div>
 
@@ -931,12 +966,12 @@ export default function AdminDashboard({
                 <div className="flex items-center gap-2">
                   <Percent className="w-5 h-5 text-brand-600" />
                   <h3 className="font-bold text-stone-900 text-base">
-                    تعديل نسبة خصم الجملة الافتراضية
+                    {t.settingsDiscountTitle}
                   </h3>
                 </div>
 
                 <p className="text-stone-600 text-xs leading-relaxed">
-                  هذه النسبة تُطبق تلقائياً على حسابات تجار الجملة الجدد عند تسجيلهم، وتظهر لهم الأسعار مخفضة فور تسجيل الدخول.
+                  {t.settingsDiscountDesc}
                 </p>
 
                 <div className="flex items-center gap-3 pt-2">
@@ -953,7 +988,7 @@ export default function AdminDashboard({
 
                 {saveSuccess && (
                   <div className="text-emerald-700 text-xs font-bold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
-                    ✓ تم حفظ نسبة الخصم بنجاح وتحديث المتجر بالكامل!
+                    {t.settingsDiscountSuccess}
                   </div>
                 )}
 
@@ -962,7 +997,7 @@ export default function AdminDashboard({
                   className="bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 px-6 rounded-xl text-xs flex items-center gap-1.5 transition-colors shadow-xs"
                 >
                   <Save className="w-4 h-4" />
-                  <span>حفظ نسبة الخصم</span>
+                  <span>{t.settingsSaveDiscountBtn}</span>
                 </button>
               </form>
 
@@ -975,23 +1010,23 @@ export default function AdminDashboard({
                     </div>
                     <div>
                       <h3 className="font-black text-stone-900 text-base">
-                        تنبيهات الأوردرات الجديدة (الصوت العالي والإشعارات)
+                        {t.settingsSoundCardTitle}
                       </h3>
                       <p className="text-stone-500 text-[11px]">
-                        رنة تنبيه للمطاعم بصوت مرتفع وإشعارات سطح المكتب المنبثقة فور وصول أي أوردر جديد.
+                        {t.settingsSoundCardDesc}
                       </p>
                     </div>
                   </div>
                   <span className="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-300">
-                    نشط تلقائياً 🔊
+                    {t.settingsSoundCardActive}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
-                    <strong className="text-stone-900 block text-xs">تجربة صوت التنبيه (Loud Chime)</strong>
+                    <strong className="text-stone-900 block text-xs">{t.settingsTestSoundTitle}</strong>
                     <p className="text-stone-500 text-[11px]">
-                      اضغط للاستماع إلى رنة التنبيه العالية والتأكد من مستوى صوت السماعات بجهازك.
+                      {t.settingsTestSoundDesc}
                     </p>
                     <button
                       type="button"
@@ -999,14 +1034,14 @@ export default function AdminDashboard({
                       className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black rounded-xl text-xs flex items-center gap-2 transition-all shadow-xs"
                     >
                       <Volume2 className={`w-4 h-4 ${isTestingSound ? 'animate-bounce' : ''}`} />
-                      <span>{isTestingSound ? '🔊 الصوت يعمل الآن...' : '🔊 تجربة الصوت العالي'}</span>
+                      <span>{isTestingSound ? (lang === 'en' ? '🔊 Chime Playing...' : '🔊 الصوت يعمل الآن...') : t.settingsTestSoundBtn}</span>
                     </button>
                   </div>
 
                   <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
-                    <strong className="text-stone-900 block text-xs">إشعارات سطح المكتب (Desktop Notifications)</strong>
+                    <strong className="text-stone-900 block text-xs">{t.settingsDesktopNotifTitle}</strong>
                     <p className="text-stone-500 text-[11px]">
-                      تنبيه يظهر في زاوية الشاشة حتى إذا كنت تتصفح موقعاً آخر أو مصغر المتصفح.
+                      {t.settingsDesktopNotifDesc}
                     </p>
                     <button
                       type="button"
@@ -1020,8 +1055,8 @@ export default function AdminDashboard({
                       <Bell className="w-4 h-4" />
                       <span>
                         {notificationPermission === 'granted'
-                          ? 'إشعارات الشاشة: مفعلة ومسموح بها ✓'
-                          : 'طلب الإذن وتفعيل إشعارات الشاشة'}
+                          ? t.settingsDesktopNotifGranted
+                          : t.settingsDesktopNotifRequest}
                       </span>
                     </button>
                   </div>
@@ -1034,17 +1069,17 @@ export default function AdminDashboard({
                   <Globe className="w-5 h-5 text-brand-600" />
                   <div>
                     <h3 className="font-black text-stone-900 text-base">
-                      إعدادات المتجر وأرقام التواصل وشريط الإعلانات
+                      {t.settingsStoreSettingsTitle}
                     </h3>
                     <p className="text-stone-500 text-[11px]">
-                      تعديل أرقام الهواتف ونصوص الموقع الترويجية مباشرة.
+                      {t.settingsStoreSettingsDesc}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="font-bold text-stone-700 block mb-1">هاتف الطلبات الرئيسي:</label>
+                    <label className="font-bold text-stone-700 block mb-1">{t.settingsPhoneLabel}</label>
                     <input
                       type="text"
                       required
@@ -1055,7 +1090,7 @@ export default function AdminDashboard({
                   </div>
 
                   <div>
-                    <label className="font-bold text-stone-700 block mb-1">رقم الواتساب الرسمي:</label>
+                    <label className="font-bold text-stone-700 block mb-1">{t.settingsWhatsappLabel}</label>
                     <input
                       type="text"
                       required
@@ -1068,7 +1103,7 @@ export default function AdminDashboard({
 
                 <div>
                   <label className="font-bold text-stone-700 block mb-1">
-                    نص شريط الإعلانات العلوي (سياسة الشحن والعروض):
+                    {t.settingsBannerLabel}
                   </label>
                   <input
                     type="text"
@@ -1081,7 +1116,7 @@ export default function AdminDashboard({
                 </div>
 
                 <div>
-                  <label className="font-bold text-stone-700 block mb-1">سلوجان المتجر:</label>
+                  <label className="font-bold text-stone-700 block mb-1">{t.settingsSloganLabel}</label>
                   <input
                     type="text"
                     value={storeSlogan}
@@ -1093,7 +1128,7 @@ export default function AdminDashboard({
                 {storeSettingsSuccess && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-bold flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>✓ تم تحديث بيانات المتجر والشريط العلوي بنجاح!</span>
+                    <span>{t.settingsStoreSuccess}</span>
                   </div>
                 )}
 
@@ -1102,7 +1137,7 @@ export default function AdminDashboard({
                   className="bg-stone-900 hover:bg-stone-800 text-white font-bold py-2.5 px-6 rounded-xl text-xs flex items-center gap-1.5 transition-colors shadow-xs"
                 >
                   <Save className="w-4 h-4" />
-                  <span>حفظ إعدادات المتجر والتواصل</span>
+                  <span>{t.settingsSaveStoreBtn}</span>
                 </button>
               </form>
 
@@ -1116,14 +1151,18 @@ export default function AdminDashboard({
       <footer className="px-4 sm:px-8 py-3 bg-stone-900 border-t border-stone-800 text-stone-400 text-xs flex justify-between items-center shrink-0">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span className="text-stone-300 font-medium">نظام إدارة بونابيتي نشط</span>
-          <span className="hidden sm:inline text-stone-500">• هاتف الإدارة: {BUSINESS_INFO.phoneDisplay}</span>
+          <span className="text-stone-300 font-medium">
+            {lang === 'en' ? 'Bonne Appetit ERP System Active' : 'نظام إدارة بونابيتي نشط'}
+          </span>
+          <span className="hidden sm:inline text-stone-500">
+            • {lang === 'en' ? 'Admin Phone: ' : 'هاتف الإدارة: '}{BUSINESS_INFO.phoneDisplay}
+          </span>
         </div>
         <button
           onClick={onClose}
           className="bg-stone-800 hover:bg-stone-700 text-stone-200 px-4 py-1.5 rounded-xl font-bold text-xs transition-colors border border-stone-700 shadow-xs"
         >
-          الخروج والرجوع للمتجر 🏪
+          {t.adminBackToStore} 🏪
         </button>
       </footer>
 
@@ -1133,6 +1172,8 @@ export default function AdminDashboard({
           invoice={selectedInvoiceForView}
           isOpen={!!selectedInvoiceForView}
           onClose={() => setSelectedInvoiceForView(null)}
+          lang={lang}
+          t={t}
         />
       )}
     </div>

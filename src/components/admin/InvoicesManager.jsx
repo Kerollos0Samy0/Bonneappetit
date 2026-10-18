@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Receipt, Plus, Search, Trash2, Printer, Eye, MessageCircle, AlertTriangle, CheckCircle2, User, DollarSign, CreditCard, ShoppingBag, ArrowDownRight, Phone } from 'lucide-react';
 import { PRODUCTS, BUSINESS_INFO } from '../../data/products';
 import { generateInvoiceNumber } from '../../data/adminDefaults';
+import { UI_TRANSLATIONS, getLocalizedProduct } from '../../data/translations';
 
 export default function InvoicesManager({
   products = PRODUCTS,
@@ -11,8 +12,11 @@ export default function InvoicesManager({
   inventory = {},
   wholesaleUsers = [],
   wholesaleDiscountPct = 15,
-  onOpenInvoiceView
+  onOpenInvoiceView,
+  lang = 'ar',
+  t
 }) {
+  const activeT = t || UI_TRANSLATIONS[lang] || UI_TRANSLATIONS.ar;
   // View Toggle: 'list' or 'create'
   const [currentView, setCurrentView] = useState('list'); // 'list' | 'create'
 
@@ -228,10 +232,10 @@ export default function InvoicesManager({
           </div>
           <div>
             <h3 className="text-base font-black">
-              قسم الفواتير ونقاط البيع (POS & Billing)
+              {activeT.invoices_title}
             </h3>
             <p className="text-xs text-stone-400">
-              إنشاء فواتير المبيعات، والخصم التلقائي المباشر من رصيد المخزن مع كل فاتورة.
+              {activeT.invoices_desc}
             </p>
           </div>
         </div>
@@ -243,14 +247,14 @@ export default function InvoicesManager({
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-black rounded-xl shadow-md transition-all text-xs"
             >
               <Plus className="w-4 h-4" />
-              <span>إنشاء فاتورة جديدة 🧾</span>
+              <span>{activeT.invoices_newInvoice} 🧾</span>
             </button>
           ) : (
             <button
               onClick={() => setCurrentView('list')}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold rounded-xl text-xs transition-colors"
             >
-              <span>العودة لأرشيف الفواتير</span>
+              <span>{lang === 'en' ? 'Back to Invoices Archive' : 'العودة لأرشيف الفواتير'}</span>
             </button>
           )}
         </div>
@@ -263,14 +267,14 @@ export default function InvoicesManager({
           <div className="border-b border-stone-200 pb-4 flex items-center justify-between">
             <div>
               <span className="text-xs font-bold text-brand-600 uppercase tracking-widest block">
-                فاتورة مبيعات جديدة
+                {lang === 'en' ? 'New Sales Invoice' : 'فاتورة مبيعات جديدة'}
               </span>
               <h2 className="text-lg font-black text-stone-900 mt-0.5">
-                رقم الفاتورة المتوقع: <span className="font-mono text-brand-600">{generateInvoiceNumber(invoices)}</span>
+                {lang === 'en' ? 'Expected Invoice #:' : 'رقم الفاتورة المتوقع:'} <span className="font-mono text-brand-600">{generateInvoiceNumber(invoices)}</span>
               </h2>
             </div>
             <span className="text-xs text-stone-500 bg-stone-100 px-3 py-1 rounded-full font-mono">
-              📅 {new Date().toLocaleDateString('ar-EG')}
+              📅 {new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'ar-EG')}
             </span>
           </div>
 
@@ -286,17 +290,17 @@ export default function InvoicesManager({
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 pb-1">
               <h4 className="text-xs font-black text-stone-900 flex items-center gap-1.5">
                 <User className="w-4 h-4 text-brand-600" />
-                <span>1. بيانات العميل / التاجر:</span>
+                <span>{lang === 'en' ? '1. Customer / Merchant Details:' : '1. بيانات العميل / التاجر:'}</span>
               </h4>
               <span className="text-[11px] text-stone-500">
-                اختر من قائمة التجار المعتمدين ليتم ملء بياناته ونسبة خصمه فوراً، أو اختر "عميل جديد" بدون خصم.
+                {lang === 'en' ? 'Select an approved merchant to auto-fill details and discount, or pick retail.' : 'اختر من قائمة التجار المعتمدين ليتم ملء بياناته ونسبة خصمه فوراً، أو اختر "عميل جديد" بدون خصم.'}
               </span>
             </div>
 
             {/* Customer Dropdown (Always prominent!) */}
             <div>
               <label className="font-bold text-stone-800 block mb-1 text-xs">
-                اختيار العميل / التاجر (Drop Down) <span className="text-red-500">*</span>:
+                {activeT.invoices_customerSelect || (lang === 'en' ? 'Select Customer / Merchant (Dropdown)' : 'اختيار العميل / التاجر (Drop Down)')} <span className="text-red-500">*</span>:
               </label>
               <select
                 value={selectedMerchantId || 'new_retail'}
@@ -304,12 +308,12 @@ export default function InvoicesManager({
                 className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-bold text-xs focus:outline-hidden focus:border-brand-500 shadow-2xs"
               >
                 <option value="new_retail">
-                  ➕ عميل جديد / قطاعي (بدون خصم — 0%)
+                  ➕ {lang === 'en' ? 'New Retail Customer (No Discount — 0%)' : 'عميل جديد / قطاعي (بدون خصم — 0%)'}
                 </option>
-                <optgroup label="🏪 قائمة تجار الجملة المعتمدين">
+                <optgroup label={lang === 'en' ? '🏪 Approved Wholesale Merchants' : '🏪 قائمة تجار الجملة المعتمدين'}>
                   {wholesaleUsers.filter((u) => u.approved !== false).map((m) => (
                     <option key={m.id} value={m.id}>
-                      🏪 {m.name} ({m.area || m.phone}) — خصم {m.discountPct || wholesaleDiscountPct}%
+                      🏪 {m.name} ({m.area || m.phone}) — {lang === 'en' ? 'Discount' : 'خصم'} {m.discountPct || wholesaleDiscountPct}%
                     </option>
                   ))}
                 </optgroup>
@@ -319,19 +323,19 @@ export default function InvoicesManager({
             {/* Customer Details Input */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
               <div>
-                <label className="font-bold text-stone-700 block mb-1">اسم العميل / التاجر <span className="text-red-500">*</span>:</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Customer / Facility Name' : 'اسم العميل / التاجر'} <span className="text-red-500">*</span>:</label>
                 <input
                   type="text"
                   required
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="مثال: سوبر ماركت كارما أو مدام مريم..."
+                  placeholder={lang === 'en' ? 'e.g. Karma Supermarket' : 'مثال: سوبر ماركت كارما أو مدام مريم...'}
                   className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-bold focus:outline-hidden focus:border-brand-500"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 block mb-1">رقم الموبايل:</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Phone Number:' : 'رقم الموبايل:'}</label>
                 <input
                   type="tel"
                   value={customerPhone}
@@ -343,12 +347,12 @@ export default function InvoicesManager({
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 block mb-1">العنوان / المنطقة:</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Address / Area:' : 'العنوان / المنطقة:'}</label>
                 <input
                   type="text"
                   value={customerAddress}
                   onChange={(e) => setCustomerAddress(e.target.value)}
-                  placeholder="مثال: المعادي - مصر القديمة..."
+                  placeholder={lang === 'en' ? 'e.g. Maadi, Cairo...' : 'مثال: المعادي - مصر القديمة...'}
                   className="w-full p-2.5 rounded-xl border border-stone-300 bg-white focus:outline-hidden focus:border-brand-500"
                 />
               </div>
@@ -358,40 +362,41 @@ export default function InvoicesManager({
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
               {selectedMerchantId && selectedMerchantId !== 'new_retail' ? (
                 <span className="bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-                  <span>🏪 تاجر جملة معتمد: تم تطبيق خصم {discountPct}% تلقائياً على الفاتورة</span>
+                  <span>🏪 {lang === 'en' ? `Approved Merchant: ${discountPct}% wholesale discount applied automatically` : `تاجر جملة معتمد: تم تطبيق خصم ${discountPct}% تلقائياً على الفاتورة`}</span>
                 </span>
               ) : (
                 <span className="bg-stone-200 text-stone-700 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-                  <span>👤 عميل جديد / قطاعي: بدون خصم (0%) بسعر المنيو الأصلي</span>
+                  <span>👤 {lang === 'en' ? 'Retail Client: Standard retail prices (0% discount)' : 'عميل جديد / قطاعي: بدون خصم (0%) بسعر المنيو الأصلي'}</span>
                 </span>
               )}
 
               <span className="text-stone-500">
-                (يمكنك تعديل نسبة الخصم يدوياً من أسفل الفاتورة في أي وقت)
+                {lang === 'en' ? '(You can customize the discount percentage below anytime)' : '(يمكنك تعديل نسبة الخصم يدوياً من أسفل الفاتورة في أي وقت)'}
               </span>
             </div>
           </div>
 
           {/* Add Items to Invoice Form */}
           <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-3">
-            <h4 className="text-xs font-black text-stone-800">2. إضافة أصناف للفاتورة:</h4>
+            <h4 className="text-xs font-black text-stone-800">{lang === 'en' ? '2. Add Items to Invoice:' : '2. إضافة أصناف للفاتورة:'}</h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs">
               
               {/* Product Select */}
               <div className="sm:col-span-6">
-                <label className="font-bold text-stone-700 block mb-1">اختر الصنف من المخزن:</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Select Dish from Stock:' : 'اختر الصنف من المخزن:'}</label>
                 <select
                   value={currentProductId}
                   onChange={(e) => handleProductSelect(e.target.value)}
                   className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium focus:outline-hidden focus:border-brand-500"
                 >
-                  <option value="">-- اختر صنفاً --</option>
+                  <option value="">{lang === 'en' ? '-- Select a dish --' : '-- اختر صنفاً --'}</option>
                   {products.map((prod) => {
+                    const localized = getLocalizedProduct(prod, lang);
                     const stock = inventory[prod.id] || 0;
                     return (
                       <option key={prod.id} value={prod.id}>
-                        {prod.name} | رصيد المخزن: [{stock}] {prod.unit} - {prod.price} ج.م
+                        {localized.name} | {lang === 'en' ? 'Stock:' : 'رصيد المخزن:'} [{stock}] {localized.unit} - {prod.price} {activeT.currency}
                       </option>
                     );
                   })}
@@ -400,7 +405,7 @@ export default function InvoicesManager({
 
               {/* Quantity */}
               <div className="sm:col-span-2">
-                <label className="font-bold text-stone-700 block mb-1">الكمية:</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Quantity:' : 'الكمية:'}</label>
                 <input
                   type="number"
                   min="1"
@@ -412,7 +417,7 @@ export default function InvoicesManager({
 
               {/* Unit Price */}
               <div className="sm:col-span-2">
-                <label className="font-bold text-stone-700 block mb-1">سعر الوحدة (ج.م):</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Price' : 'سعر الوحدة'} ({activeT.currency}):</label>
                 <input
                   type="number"
                   min="0"
@@ -430,7 +435,7 @@ export default function InvoicesManager({
                   className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-1 shadow-xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>إضافة</span>
+                  <span>{lang === 'en' ? 'Add' : 'إضافة'}</span>
                 </button>
               </div>
 
@@ -439,22 +444,22 @@ export default function InvoicesManager({
 
           {/* Current Invoice Items Table */}
           <div className="border border-stone-200 rounded-2xl overflow-hidden">
-            <table className="w-full text-right text-xs">
+            <table className={`w-full ${lang === 'en' ? 'text-left' : 'text-right'} text-xs`}>
               <thead className="bg-stone-100 text-stone-700 font-black border-b border-stone-200">
                 <tr>
                   <th className="p-3">#</th>
-                  <th className="p-3">الصنف</th>
-                  <th className="p-3 text-center">الكمية</th>
-                  <th className="p-3 text-left">سعر القطعة</th>
-                  <th className="p-3 text-left">الإجمالي</th>
-                  <th className="p-3 text-center">حذف</th>
+                  <th className="p-3">{activeT.inv_thDish || (lang === 'en' ? 'Dish' : 'الصنف')}</th>
+                  <th className="p-3 text-center">{lang === 'en' ? 'Qty' : 'الكمية'}</th>
+                  <th className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'}`}>{lang === 'en' ? 'Unit Price' : 'سعر القطعة'}</th>
+                  <th className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'}`}>{lang === 'en' ? 'Total' : 'الإجمالي'}</th>
+                  <th className="p-3 text-center">{lang === 'en' ? 'Delete' : 'حذف'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {invoiceItems.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="p-6 text-center text-stone-400 font-bold">
-                      لم يتم إضافة أي أصناف بعد. اختر الأصناف من النموذج أعلاه.
+                      {lang === 'en' ? 'No items added yet. Choose dishes from the selector above.' : 'لم يتم إضافة أي أصناف بعد. اختر الأصناف من النموذج أعلاه.'}
                     </td>
                   </tr>
                 ) : (
@@ -468,11 +473,11 @@ export default function InvoicesManager({
                       <td className="p-3 text-center font-mono font-black text-stone-800">
                         {item.quantity}
                       </td>
-                      <td className="p-3 text-left font-mono text-stone-700">
-                        {item.price} ج.م
+                      <td className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'} font-mono text-stone-700`}>
+                        {item.price} {activeT.currency}
                       </td>
-                      <td className="p-3 text-left font-mono font-black text-stone-900">
-                        {item.total} ج.م
+                      <td className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'} font-mono font-black text-stone-900`}>
+                        {item.total} {activeT.currency}
                       </td>
                       <td className="p-3 text-center">
                         <button
@@ -496,27 +501,27 @@ export default function InvoicesManager({
             {/* Left: Payment Method & Notes */}
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-stone-700 block mb-1">طريقة السداد / الدفع:</label>
+                <label className="font-bold text-stone-700 block mb-1">{activeT.invoices_thPayment || (lang === 'en' ? 'Payment Method:' : 'طريقة السداد / الدفع:')}</label>
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-bold focus:outline-hidden focus:border-brand-500"
                 >
-                  <option value="كاش (نقدي)">كاش (نقدي) 💵</option>
-                  <option value="إنستاباي (InstaPay)">إنستاباي (InstaPay) 📱</option>
-                  <option value="محفظة فودافون كاش">محفظة فودافون كاش 💳</option>
-                  <option value="تحويل بنكي">تحويل بنكي 🏦</option>
-                  <option value="آجل (على الحساب)">آجل (على الحساب) 📝</option>
+                  <option value="كاش (نقدي)">{lang === 'en' ? 'Cash 💵' : 'كاش (نقدي) 💵'}</option>
+                  <option value="إنستاباي (InstaPay)">{lang === 'en' ? 'InstaPay 📱' : 'إنستاباي (InstaPay) 📱'}</option>
+                  <option value="محفظة فودافون كاش">{lang === 'en' ? 'Vodafone Cash 💳' : 'محفظة فودافون كاش 💳'}</option>
+                  <option value="تحويل بنكي">{lang === 'en' ? 'Bank Transfer 🏦' : 'تحويل بنكي 🏦'}</option>
+                  <option value="آجل (على الحساب)">{lang === 'en' ? 'Credit / On Account 📝' : 'آجل (على الحساب) 📝'}</option>
                 </select>
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 block mb-1">ملاحظات الفاتورة:</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Invoice Notes:' : 'ملاحظات الفاتورة:'}</label>
                 <input
                   type="text"
                   value={invoiceNotes}
                   onChange={(e) => setInvoiceNotes(e.target.value)}
-                  placeholder="ملاحظات تسليم، وقت الشحن..."
+                  placeholder={lang === 'en' ? 'Delivery instructions, time...' : 'ملاحظات تسليم، وقت الشحن...'}
                   className="w-full p-2.5 rounded-xl border border-stone-300 bg-white focus:outline-hidden focus:border-brand-500"
                 />
               </div>
@@ -525,14 +530,14 @@ export default function InvoicesManager({
             {/* Right: Calculations Box */}
             <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2.5 text-xs">
               <div className="flex justify-between items-center text-stone-600">
-                <span>إجمالي الأصناف:</span>
-                <span className="font-mono font-bold text-sm">{subtotal} ج.م</span>
+                <span>{lang === 'en' ? 'Items Subtotal:' : 'إجمالي الأصناف:'}</span>
+                <span className="font-mono font-bold text-sm">{subtotal} {activeT.currency}</span>
               </div>
 
               {/* Discount Input */}
               <div className="flex justify-between items-center text-stone-700">
                 <span className="flex items-center gap-1 font-bold">
-                  نسبة الخصم (%):
+                  {lang === 'en' ? 'Discount (%):' : 'نسبة الخصم (%):'}
                 </span>
                 <div className="flex items-center gap-1">
                   <input
@@ -543,13 +548,13 @@ export default function InvoicesManager({
                     onChange={(e) => setDiscountPct(e.target.value)}
                     className="w-16 p-1 text-center border border-stone-300 rounded font-mono font-bold"
                   />
-                  <span className="font-mono text-amber-700 font-bold">(-{discountAmount} ج.م)</span>
+                  <span className="font-mono text-amber-700 font-bold">(-{discountAmount} {activeT.currency})</span>
                 </div>
               </div>
 
               {/* Shipping Fee */}
               <div className="flex justify-between items-center text-stone-700">
-                <span>مصاريف الشحن والتوصيل (ج.م):</span>
+                <span>{lang === 'en' ? 'Shipping & Delivery' : 'مصاريف الشحن والتوصيل'} ({activeT.currency}):</span>
                 <input
                   type="number"
                   min="0"
@@ -561,9 +566,9 @@ export default function InvoicesManager({
 
               {/* Net Total */}
               <div className="pt-2 border-t-2 border-stone-800 flex justify-between items-center">
-                <span className="text-sm font-black text-stone-900">الصافي المطلوب سداده:</span>
+                <span className="text-sm font-black text-stone-900">{lang === 'en' ? 'Net Due Total:' : 'الصافي المطلوب سداده:'}</span>
                 <span className="text-xl font-black font-mono text-brand-600">
-                  {totalAmount} ج.م
+                  {totalAmount} {activeT.currency}
                 </span>
               </div>
             </div>
@@ -577,7 +582,7 @@ export default function InvoicesManager({
               onClick={() => setCurrentView('list')}
               className="w-full sm:w-auto px-5 py-3 rounded-2xl border border-stone-200 text-stone-600 font-bold text-xs hover:bg-stone-100"
             >
-              إلغاء
+              {lang === 'en' ? 'Cancel' : 'إلغاء'}
             </button>
 
             <button
@@ -586,7 +591,7 @@ export default function InvoicesManager({
               className="w-full sm:w-auto px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-black text-xs rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2"
             >
               <Receipt className="w-4 h-4" />
-              <span>إصدار الفاتورة وخصم الكميات من المخزن أوتوماتيكياً ➖</span>
+              <span>{lang === 'en' ? 'Issue Invoice & Auto-Deduct Stock ➖' : 'إصدار الفاتورة وخصم الكميات من المخزن أوتوماتيكياً ➖'}</span>
             </button>
           </div>
 
@@ -600,17 +605,17 @@ export default function InvoicesManager({
           {/* Stats Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
             <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
-              <span className="text-stone-500 font-medium block mb-1">إجمالي مبيعات الفواتير</span>
+              <span className="text-stone-500 font-medium block mb-1">{lang === 'en' ? 'Total Invoice Sales' : 'إجمالي مبيعات الفواتير'}</span>
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-600" />
                 <span className="text-xl font-black text-emerald-700 font-mono">
-                  {totalSalesRevenue.toLocaleString()} ج.م
+                  {totalSalesRevenue.toLocaleString()} {activeT.currency}
                 </span>
               </div>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
-              <span className="text-stone-500 font-medium block mb-1">عدد الفواتير الصادرة</span>
+              <span className="text-stone-500 font-medium block mb-1">{lang === 'en' ? 'Total Invoices Issued' : 'عدد الفواتير الصادرة'}</span>
               <div className="flex items-center gap-2">
                 <Receipt className="w-4 h-4 text-brand-600" />
                 <span className="text-xl font-black text-stone-900 font-mono">
@@ -620,11 +625,11 @@ export default function InvoicesManager({
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs col-span-2 sm:col-span-1">
-              <span className="text-stone-500 font-medium block mb-1">متوسط قيمة الفاتورة</span>
+              <span className="text-stone-500 font-medium block mb-1">{lang === 'en' ? 'Average Invoice Value' : 'متوسط قيمة الفاتورة'}</span>
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-4 h-4 text-indigo-600" />
                 <span className="text-xl font-black text-stone-900 font-mono">
-                  {totalInvoicesCount > 0 ? Math.round(totalSalesRevenue / totalInvoicesCount) : 0} ج.م
+                  {totalInvoicesCount > 0 ? Math.round(totalSalesRevenue / totalInvoicesCount) : 0} {activeT.currency}
                 </span>
               </div>
             </div>
@@ -637,24 +642,24 @@ export default function InvoicesManager({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="بحث برقم الفاتورة أو اسم العميل..."
+                placeholder={lang === 'en' ? 'Search by invoice # or customer...' : 'بحث برقم الفاتورة أو اسم العميل...'}
                 className="w-full pl-3 pr-9 py-2 rounded-xl border border-stone-300 bg-white"
               />
-              <Search className="w-4 h-4 text-stone-400 absolute right-3 top-2.5" />
+              <Search className={`w-4 h-4 text-stone-400 absolute ${lang === 'ar' ? 'right-3' : 'left-3'} top-2.5`} />
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-stone-500 font-bold">طريقة الدفع:</span>
+              <span className="text-stone-500 font-bold">{activeT.invoices_thPayment || (lang === 'en' ? 'Payment Method:' : 'طريقة الدفع:')}</span>
               <select
                 value={paymentFilter}
                 onChange={(e) => setPaymentFilter(e.target.value)}
                 className="p-2 rounded-xl border border-stone-300 bg-white text-xs font-bold"
               >
-                <option value="all">الكل</option>
-                <option value="كاش (نقدي)">كاش</option>
-                <option value="إنستاباي (InstaPay)">إنستاباي</option>
-                <option value="محفظة فودافون كاش">فودافون كاش</option>
-                <option value="آجل (على الحساب)">آجل</option>
+                <option value="all">{lang === 'en' ? 'All' : 'الكل'}</option>
+                <option value="كاش (نقدي)">{lang === 'en' ? 'Cash' : 'كاش'}</option>
+                <option value="إنستاباي (InstaPay)">{lang === 'en' ? 'InstaPay' : 'إنستاباي'}</option>
+                <option value="محفظة فودافون كاش">{lang === 'en' ? 'Vodafone Cash' : 'فودافون كاش'}</option>
+                <option value="آجل (على الحساب)">{lang === 'en' ? 'Credit' : 'آجل'}</option>
               </select>
             </div>
           </div>
@@ -663,24 +668,24 @@ export default function InvoicesManager({
           {filteredInvoices.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-3xl border border-stone-200 space-y-2">
               <Receipt className="w-8 h-8 text-stone-300 mx-auto" />
-              <p className="font-bold text-stone-700 text-sm">لا توجد فواتير مسجلة حتى الآن</p>
+              <p className="font-bold text-stone-700 text-sm">{lang === 'en' ? 'No invoices recorded yet' : 'لا توجد فواتير مسجلة حتى الآن'}</p>
               <p className="text-xs text-stone-500">
-                اضغط على زر "إنشاء فاتورة جديدة" لإصدار أول فاتورة وخصمها من المخزن.
+                {lang === 'en' ? 'Click "Issue New Invoice" to create an invoice and deduct inventory.' : 'اضغط على زر "إنشاء فاتورة جديدة" لإصدار أول فاتورة وخصمها من المخزن.'}
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto border border-stone-200 rounded-2xl bg-white shadow-xs">
-              <table className="w-full text-right text-xs">
+              <table className={`w-full ${lang === 'en' ? 'text-left' : 'text-right'} text-xs`}>
                 <thead className="bg-stone-100 text-stone-700 font-black border-b border-stone-200">
                   <tr>
-                    <th className="p-3">رقم الفاتورة</th>
-                    <th className="p-3">التاريخ والوقت</th>
-                    <th className="p-3">العميل</th>
-                    <th className="p-3">نوع العميل</th>
-                    <th className="p-3 text-center">عدد الأصناف</th>
-                    <th className="p-3 text-left">المبلغ الإجمالي</th>
-                    <th className="p-3">طريقة الدفع</th>
-                    <th className="p-3 text-center">إجراءات</th>
+                    <th className="p-3">{activeT.invoices_thInvoiceNo || (lang === 'en' ? 'Invoice #' : 'رقم الفاتورة')}</th>
+                    <th className="p-3">{activeT.invoices_thDate || (lang === 'en' ? 'Date & Time' : 'التاريخ والوقت')}</th>
+                    <th className="p-3">{activeT.invoices_thCustomer || (lang === 'en' ? 'Customer' : 'العميل')}</th>
+                    <th className="p-3">{lang === 'en' ? 'Type' : 'نوع العميل'}</th>
+                    <th className="p-3 text-center">{lang === 'en' ? 'Items' : 'عدد الأصناف'}</th>
+                    <th className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'}`}>{activeT.invoices_thTotal || (lang === 'en' ? 'Total' : 'المبلغ الإجمالي')}</th>
+                    <th className="p-3">{activeT.invoices_thPayment || (lang === 'en' ? 'Payment' : 'طريقة الدفع')}</th>
+                    <th className="p-3 text-center">{lang === 'en' ? 'Actions' : 'إجراءات'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
@@ -707,7 +712,7 @@ export default function InvoicesManager({
                             ? 'bg-amber-100 text-amber-800 border border-amber-200'
                             : 'bg-stone-100 text-stone-700'
                         }`}>
-                          {inv.customerType === 'wholesale' ? 'تاجر جملة' : 'قطاعي / عادي'}
+                          {inv.customerType === 'wholesale' ? (lang === 'en' ? 'Wholesale' : 'تاجر جملة') : (lang === 'en' ? 'Retail' : 'قطاعي / عادي')}
                         </span>
                       </td>
 
@@ -715,8 +720,8 @@ export default function InvoicesManager({
                         {inv.itemsCount || inv.items?.length || 0}
                       </td>
 
-                      <td className="p-3 text-left font-mono font-black text-sm text-stone-900">
-                        {inv.total} ج.م
+                      <td className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'} font-mono font-black text-sm text-stone-900`}>
+                        {inv.total} {activeT.currency}
                       </td>
 
                       <td className="p-3">
@@ -729,7 +734,7 @@ export default function InvoicesManager({
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => onOpenInvoiceView(inv)}
-                            title="معاينة وطباعة الفاتورة"
+                            title={activeT.invoices_viewInvoice || (lang === 'en' ? 'View & Print' : 'معاينة وطباعة الفاتورة')}
                             className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
                           >
                             <Printer className="w-3.5 h-3.5" />
@@ -737,11 +742,11 @@ export default function InvoicesManager({
 
                           <button
                             onClick={() => {
-                              if (window.confirm(`هل أنت متأكد من إلغاء الفاتورة ${inv.invoiceNumber}؟`)) {
+                              if (window.confirm(lang === 'en' ? `Are you sure you want to cancel invoice ${inv.invoiceNumber}? Stock will be returned.` : `هل أنت متأكد من إلغاء الفاتورة ${inv.invoiceNumber}؟`)) {
                                 onCancelInvoice(inv.id);
                               }
                             }}
-                            title="إلغاء الفاتورة واسترجاع المخزون"
+                            title={activeT.invoices_cancelInvoice || (lang === 'en' ? 'Cancel & Return Stock' : 'إلغاء الفاتورة واسترجاع المخزون')}
                             className="p-1.5 rounded-lg bg-stone-100 hover:bg-red-50 text-stone-400 hover:text-red-500 transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

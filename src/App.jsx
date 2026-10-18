@@ -793,6 +793,8 @@ export default function App() {
           businessInfo={businessInfo}
           onUpdateBusinessInfo={handleUpdateBusinessInfo}
           initialTab={adminInitialTab}
+          lang={lang}
+          onToggleLang={handleToggleLang}
         />
       </ErrorBoundary>
 

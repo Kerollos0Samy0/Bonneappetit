@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { UserCheck, Plus, Search, Calendar, Clock, CheckCircle2, AlertCircle, Trash2, UserPlus, Filter, Award, Boxes, Sparkles } from 'lucide-react';
 import { PRODUCTS } from '../../data/products';
+import { UI_TRANSLATIONS, getLocalizedProduct } from '../../data/translations';
 
 export default function WorkersManager({
   products = PRODUCTS,
@@ -10,8 +11,11 @@ export default function WorkersManager({
   productionLogs = [],
   onLogProduction,
   onDeleteProductionLog,
-  inventory = {}
+  inventory = {},
+  lang = 'ar',
+  t
 }) {
+  const activeT = t || UI_TRANSLATIONS[lang] || UI_TRANSLATIONS.ar;
   // New Production Entry State
   const [selectedWorkerId, setSelectedWorkerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -151,36 +155,36 @@ export default function WorkersManager({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-gradient-to-br from-brand-50 to-amber-50 p-4 rounded-2xl border border-brand-200">
           <div className="flex items-center justify-between text-brand-800 mb-1">
-            <span className="text-xs font-bold">إنتاج اليوم الفعلي</span>
+            <span className="text-xs font-bold">{lang === 'en' ? "Today's Production" : 'إنتاج اليوم الفعلي'}</span>
             <Sparkles className="w-4 h-4 text-brand-600" />
           </div>
           <span className="text-2xl font-black text-brand-950 font-mono">
             +{todayTotalProduced}
           </span>
-          <span className="text-[11px] text-brand-700 block mt-0.5">طبق/وحدة تم تصنيعها اليوم</span>
+          <span className="text-[11px] text-brand-700 block mt-0.5">{lang === 'en' ? 'trays / units prepared today' : 'طبق/وحدة تم تصنيعها اليوم'}</span>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
           <div className="flex items-center justify-between text-stone-500 mb-1">
-            <span className="text-xs font-bold">إجمالي الإنتاج التراكمي</span>
+            <span className="text-xs font-bold">{lang === 'en' ? 'Cumulative Production' : 'إجمالي الإنتاج التراكمي'}</span>
             <Boxes className="w-4 h-4 text-emerald-600" />
           </div>
           <span className="text-2xl font-black text-stone-900 font-mono">
             {totalAllTimeProduced}
           </span>
-          <span className="text-[11px] text-stone-500 block mt-0.5">إجمالي ما ضخه العمال بالمخزن</span>
+          <span className="text-[11px] text-stone-500 block mt-0.5">{lang === 'en' ? 'Total units added to stock' : 'إجمالي ما ضخه العمال بالمخزن'}</span>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
           <div className="flex items-center justify-between text-stone-500 mb-1">
-            <span className="text-xs font-bold">الأعلى إنتاجية</span>
+            <span className="text-xs font-bold">{lang === 'en' ? 'Top Producer' : 'الأعلى إنتاجية'}</span>
             <Award className="w-4 h-4 text-amber-500" />
           </div>
           <span className="text-sm font-black text-stone-900 block truncate">
-            {topWorker ? topWorker[0] : 'لا توجد بيانات'}
+            {topWorker ? topWorker[0] : (lang === 'en' ? 'No data yet' : 'لا توجد بيانات')}
           </span>
           <span className="text-[11px] text-stone-500 block mt-0.5 font-mono">
-            {topWorker ? `${topWorker[1]} طبق مسجل` : 'ابدأ بتسجيل أول وردية'}
+            {topWorker ? `${topWorker[1]} ${lang === 'en' ? 'trays logged' : 'طبق مسجل'}` : (lang === 'en' ? 'Start logging first shift' : 'ابدأ بتسجيل أول وردية')}
           </span>
         </div>
       </div>
@@ -194,10 +198,10 @@ export default function WorkersManager({
             </div>
             <div>
               <h3 className="text-sm font-black text-stone-900">
-                تسجيل إنتاج جديد للعمال (إضافة فورية للمخزن)
+                {activeT.workers_title}
               </h3>
               <p className="text-[11px] text-stone-500">
-                اختر العامل والصنف والكمية؛ وسيتم تحديث رصيد المخزن أوتوماتيكياً في نفس اللحظة.
+                {activeT.workers_desc}
               </p>
             </div>
           </div>
@@ -208,7 +212,7 @@ export default function WorkersManager({
             className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-bold transition-colors"
           >
             <UserPlus className="w-3.5 h-3.5 text-brand-600" />
-            <span>إضافة عامل جديد</span>
+            <span>{activeT.workers_addWorker}</span>
           </button>
         </div>
 
@@ -232,7 +236,7 @@ export default function WorkersManager({
           {/* Worker Dropdown */}
           <div>
             <label className="font-bold text-stone-700 block mb-1">
-              اسم العامل / الشيف <span className="text-red-500">*</span>:
+              {lang === 'en' ? 'Worker / Chef' : 'اسم العامل / الشيف'} <span className="text-red-500">*</span>:
             </label>
             <select
               value={selectedWorkerId}
@@ -240,7 +244,7 @@ export default function WorkersManager({
               required
               className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium focus:outline-hidden focus:border-brand-500"
             >
-              <option value="">-- اختر العامل --</option>
+              <option value="">{lang === 'en' ? '-- Select Worker --' : '-- اختر العامل --'}</option>
               {workers.map((worker) => (
                 <option key={worker.id} value={worker.id}>
                   {worker.name} ({worker.role})
@@ -252,7 +256,7 @@ export default function WorkersManager({
           {/* Product Dropdown */}
           <div>
             <label className="font-bold text-stone-700 block mb-1">
-              الصنف / المنتج المُصنع <span className="text-red-500">*</span>:
+              {lang === 'en' ? 'Produced Dish / Item' : 'الصنف / المنتج المُصنع'} <span className="text-red-500">*</span>:
             </label>
             <select
               value={selectedProductId}
@@ -260,19 +264,22 @@ export default function WorkersManager({
               required
               className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium focus:outline-hidden focus:border-brand-500"
             >
-              <option value="">-- اختر الصنف من المنيو --</option>
-              {products.map((prod) => (
-                <option key={prod.id} value={prod.id}>
-                  {prod.name} (المخزون الحالي: {inventory[prod.id] || 0} {prod.unit})
-                </option>
-              ))}
+              <option value="">{lang === 'en' ? '-- Select Dish from Menu --' : '-- اختر الصنف من المنيو --'}</option>
+              {products.map((prod) => {
+                const localized = getLocalizedProduct(prod, lang);
+                return (
+                  <option key={prod.id} value={prod.id}>
+                    {localized.name} ({lang === 'en' ? 'Stock:' : 'المخزون الحالي:'} {inventory[prod.id] || 0} {localized.unit})
+                  </option>
+                );
+              })}
             </select>
           </div>
 
           {/* Quantity */}
           <div>
             <label className="font-bold text-stone-700 block mb-1">
-              الكمية المنتجة (بالطبق/الوحدة) <span className="text-red-500">*</span>:
+              {lang === 'en' ? 'Produced Quantity (Trays)' : 'الكمية المنتجة (بالطبق/الوحدة)'} <span className="text-red-500">*</span>:
             </label>
             <input
               type="number"
@@ -280,7 +287,7 @@ export default function WorkersManager({
               required
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="مثال: 25"
+              placeholder="25"
               className="w-full p-2.5 rounded-xl border border-stone-300 font-mono text-sm font-bold focus:outline-hidden focus:border-brand-500"
             />
           </div>
@@ -288,30 +295,30 @@ export default function WorkersManager({
           {/* Shift */}
           <div>
             <label className="font-bold text-stone-700 block mb-1">
-              الوردية / التوقيت:
+              {lang === 'en' ? 'Shift / Timing:' : 'الوردية / التوقيت:'}
             </label>
             <select
               value={shift}
               onChange={(e) => setShift(e.target.value)}
               className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium focus:outline-hidden focus:border-brand-500"
             >
-              <option value="وردية صباحية">وردية صباحية ☀️</option>
-              <option value="وردية مسائية">وردية مسائية 🌙</option>
-              <option value="ساعات إضافية (أوفر تايم)">ساعات إضافية (أوفر تايم) ⚡</option>
-              <option value="تجهيز عطلة / موسم">تجهيز عطلة / موسم 📦</option>
+              <option value="وردية صباحية">{lang === 'en' ? 'Morning Shift ☀️' : 'وردية صباحية ☀️'}</option>
+              <option value="وردية مسائية">{lang === 'en' ? 'Evening Shift 🌙' : 'وردية مسائية 🌙'}</option>
+              <option value="ساعات إضافية (أوفر تايم)">{lang === 'en' ? 'Overtime ⚡' : 'ساعات إضافية (أوفر تايم) ⚡'}</option>
+              <option value="تجهيز عطلة / موسم">{lang === 'en' ? 'Holiday / Season Prep 📦' : 'تجهيز عطلة / موسم 📦'}</option>
             </select>
           </div>
 
           {/* Notes (Full width on small, span 3 on medium) */}
           <div className="sm:col-span-2 md:col-span-3">
             <label className="font-bold text-stone-700 block mb-1">
-              ملاحظات إضافية (جودة التغليف، تواريخ انتهاء، رقم الباتش...):
+              {lang === 'en' ? 'Additional Notes (batch #, expiry date, packaging...):' : 'ملاحظات إضافية (جودة التغليف، تواريخ انتهاء، رقم الباتش...):'}
             </label>
             <input
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="ملاحظات اختيارية عن التشغيلة..."
+              placeholder={lang === 'en' ? 'Optional batch notes...' : 'ملاحظات اختيارية عن التشغيلة...'}
               className="w-full p-2.5 rounded-xl border border-stone-300 focus:outline-hidden focus:border-brand-500"
             />
           </div>
@@ -322,7 +329,7 @@ export default function WorkersManager({
               type="submit"
               className="w-full py-2.5 px-4 bg-brand-500 hover:bg-brand-600 text-white font-black rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5"
             >
-              <span>تسجيل وإضافة للمخزن</span>
+              <span>{activeT.workers_saveProduction}</span>
               <span className="font-mono text-base">+</span>
             </button>
           </div>
@@ -335,10 +342,10 @@ export default function WorkersManager({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-black text-stone-900">
-              سجل إنتاج العمال اليومي ({filteredLogs.length})
+              {lang === 'en' ? 'Daily Workers Production Log' : 'سجل إنتاج العمال اليومي'} ({filteredLogs.length})
             </h3>
             <p className="text-[11px] text-stone-500">
-              متابعة كل ما ينتجه العمال والتأكد من انضباط المخزن وتوزيع العمل.
+              {lang === 'en' ? 'Track all kitchen output and ensure seamless inventory updates.' : 'متابعة كل ما ينتجه العمال والتأكد من انضباط المخزن وتوزيع العمل.'}
             </p>
           </div>
 
@@ -350,7 +357,7 @@ export default function WorkersManager({
               onChange={(e) => setFilterWorker(e.target.value)}
               className="p-2 rounded-xl border border-stone-300 bg-white text-xs font-medium"
             >
-              <option value="all">جميع العمال ({workers.length})</option>
+              <option value="all">{lang === 'en' ? 'All Workers' : 'جميع العمال'} ({workers.length})</option>
               {workers.map((w) => (
                 <option key={w.id} value={w.id}>
                   {w.name}
@@ -363,7 +370,7 @@ export default function WorkersManager({
               type="text"
               value={searchProduct}
               onChange={(e) => setSearchProduct(e.target.value)}
-              placeholder="بحث بالصنف..."
+              placeholder={lang === 'en' ? 'Search dish...' : 'بحث بالصنف...'}
               className="p-2 rounded-xl border border-stone-300 bg-white text-xs w-36"
             />
           </div>
@@ -373,25 +380,25 @@ export default function WorkersManager({
         {filteredLogs.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl border border-stone-200">
             <p className="text-xs text-stone-500 font-bold">
-              لا توجد عمليات إنتاج مسجلة حتى الآن وفقاً لمعايير البحث.
+              {lang === 'en' ? 'No production records found matching criteria.' : 'لا توجد عمليات إنتاج مسجلة حتى الآن وفقاً لمعايير البحث.'}
             </p>
             <p className="text-[11px] text-stone-400 mt-1">
-              استخدم النموذج أعلاه لتسجيل أول وردية عمل لعامل.
+              {lang === 'en' ? 'Use the form above to record the first production shift.' : 'استخدم النموذج أعلاه لتسجيل أول وردية عمل لعامل.'}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto border border-stone-200 rounded-2xl bg-white shadow-xs">
-            <table className="w-full text-right text-xs">
+            <table className={`w-full ${lang === 'en' ? 'text-left' : 'text-right'} text-xs`}>
               <thead className="bg-stone-100 text-stone-700 font-black border-b border-stone-200">
                 <tr>
-                  <th className="p-3">التاريخ والوقت</th>
-                  <th className="p-3">العامل / الشيف</th>
-                  <th className="p-3">الوردية</th>
-                  <th className="p-3">الصنف المُصنّع</th>
-                  <th className="p-3 text-center">الكمية المُنتجة</th>
-                  <th className="p-3 text-center">حالة المخزن</th>
-                  <th className="p-3">ملاحظات</th>
-                  <th className="p-3 text-center">إجراء</th>
+                  <th className="p-3">{activeT.workers_thDate || (lang === 'en' ? 'Date & Time' : 'التاريخ والوقت')}</th>
+                  <th className="p-3">{activeT.workers_thName || (lang === 'en' ? 'Worker / Chef' : 'العامل / الشيف')}</th>
+                  <th className="p-3">{activeT.workers_thShift || (lang === 'en' ? 'Shift' : 'الوردية')}</th>
+                  <th className="p-3">{activeT.workers_thDish || (lang === 'en' ? 'Produced Dish' : 'الصنف المُصنّع')}</th>
+                  <th className="p-3 text-center">{activeT.workers_thQuantity || (lang === 'en' ? 'Produced Qty' : 'الكمية المُنتجة')}</th>
+                  <th className="p-3 text-center">{lang === 'en' ? 'Stock Status' : 'حالة المخزن'}</th>
+                  <th className="p-3">{lang === 'en' ? 'Notes' : 'ملاحظات'}</th>
+                  <th className="p-3 text-center">{lang === 'en' ? 'Action' : 'إجراء'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
@@ -427,7 +434,7 @@ export default function WorkersManager({
                     <td className="p-3 text-center">
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        أُضيفت للمخزن
+                        {lang === 'en' ? 'Added to Stock' : 'أُضيفت للمخزن'}
                       </span>
                     </td>
 
@@ -438,11 +445,11 @@ export default function WorkersManager({
                     <td className="p-3 text-center">
                       <button
                         onClick={() => {
-                          if (window.confirm(`هل أنت متأكد من حذف هذا السجل الخاص بـ ${log.workerName}؟`)) {
+                          if (window.confirm(lang === 'en' ? `Are you sure you want to delete this log for ${log.workerName}?` : `هل أنت متأكد من حذف هذا السجل الخاص بـ ${log.workerName}؟`)) {
                             onDeleteProductionLog(log.id);
                           }
                         }}
-                        title="حذف هذا السجل"
+                        title={lang === 'en' ? 'Delete this record' : 'حذف هذا السجل'}
                         className="text-stone-400 hover:text-red-500 p-1 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -462,38 +469,38 @@ export default function WorkersManager({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200">
             <h3 className="text-base font-black text-stone-900 mb-1">
-              إضافة عامل / شيف جديد لفريق بونابيتي
+              {lang === 'en' ? 'Add New Worker / Chef to Team' : 'إضافة عامل / شيف جديد لفريق بونابيتي'}
             </h3>
             <p className="text-xs text-stone-500 mb-4">
-              أدخل بيانات العامل لتتمكن من إسناد عمليات الإنتاج إليه.
+              {lang === 'en' ? 'Enter worker details to assign production shifts.' : 'أدخل بيانات العامل لتتمكن من إسناد عمليات الإنتاج إليه.'}
             </p>
 
             <form onSubmit={handleCreateWorker} className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-stone-700 block mb-1">اسم العامل الكامل *:</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Full Worker Name *:' : 'اسم العامل الكامل *:'}</label>
                 <input
                   type="text"
                   required
                   value={newWorkerName}
                   onChange={(e) => setNewWorkerName(e.target.value)}
-                  placeholder="مثال: شيف مصطفى محمود"
+                  placeholder={lang === 'en' ? 'e.g. Chef Mostafa' : 'مثال: شيف مصطفى محمود'}
                   className="w-full p-2.5 rounded-xl border border-stone-300 font-bold focus:outline-hidden focus:border-brand-500"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 block mb-1">التخصص / القسم المسؤول عنه:</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Role / Department:' : 'التخصص / القسم المسؤول عنه:'}</label>
                 <input
                   type="text"
                   value={newWorkerRole}
                   onChange={(e) => setNewWorkerRole(e.target.value)}
-                  placeholder="مثال: تجهيز محاشي وممبار / شيف شواية وكفتة..."
+                  placeholder={lang === 'en' ? 'e.g. Stuffed Veggies Prep / Grill Chef...' : 'مثال: تجهيز محاشي وممبار / شيف شواية وكفتة...'}
                   className="w-full p-2.5 rounded-xl border border-stone-300 focus:outline-hidden focus:border-brand-500"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-stone-700 block mb-1">رقم الهاتف (اختياري):</label>
+                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Phone Number (Optional):' : 'رقم الهاتف (اختياري):'}</label>
                 <input
                   type="tel"
                   value={newWorkerPhone}
@@ -509,13 +516,13 @@ export default function WorkersManager({
                   onClick={() => setIsAddWorkerOpen(false)}
                   className="px-4 py-2 rounded-xl border border-stone-200 text-stone-600 font-bold hover:bg-stone-100"
                 >
-                  إغلاق
+                  {lang === 'en' ? 'Close' : 'إغلاق'}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold shadow-xs"
                 >
-                  + إضافة العامل للفريق
+                  {lang === 'en' ? '+ Add Worker to Team' : '+ إضافة العامل للفريق'}
                 </button>
               </div>
             </form>
@@ -523,7 +530,7 @@ export default function WorkersManager({
             {/* Current Workers List */}
             <div className="mt-5 pt-4 border-t border-stone-200">
               <h4 className="font-bold text-stone-800 text-xs mb-2">
-                فريق العمل الحالي المسجل ({workers.length}):
+                {lang === 'en' ? 'Currently Registered Team' : 'فريق العمل الحالي المسجل'} ({workers.length}):
               </h4>
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                 {workers.map((w) => (
@@ -533,18 +540,18 @@ export default function WorkersManager({
                   >
                     <div>
                       <span className="font-bold text-stone-900 block">{w.name}</span>
-                      <span className="text-[10px] text-stone-500">{w.role || 'عامل تجهيز وإنتاج'}</span>
+                      <span className="text-[10px] text-stone-500">{w.role || (lang === 'en' ? 'Production & Prep Worker' : 'عامل تجهيز وإنتاج')}</span>
                     </div>
                     {onDeleteWorker && (
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm(`هل أنت متأكد من حذف "${w.name}" من فريق العمل؟`)) {
+                          if (window.confirm(lang === 'en' ? `Are you sure you want to remove "${w.name}" from the team?` : `هل أنت متأكد من حذف "${w.name}" من فريق العمل؟`)) {
                             onDeleteWorker(w.id);
                           }
                         }}
                         className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="حذف العامل"
+                        title={lang === 'en' ? 'Delete Worker' : 'حذف العامل'}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
