@@ -41,10 +41,11 @@ export default function InvoicesManager({
 
   const [formError, setFormError] = useState('');
 
-  // Handle Merchant selection
+  // Handle Customer / Merchant selection from dropdown
   const handleSelectMerchant = (merchantId) => {
     setSelectedMerchantId(merchantId);
-    if (!merchantId) {
+    if (!merchantId || merchantId === 'new_retail') {
+      setCustomerType('retail');
       setCustomerName('');
       setCustomerPhone('');
       setCustomerAddress('');
@@ -54,22 +55,11 @@ export default function InvoicesManager({
 
     const merchant = wholesaleUsers.find((u) => u.id === merchantId);
     if (merchant) {
+      setCustomerType('wholesale');
       setCustomerName(merchant.name);
       setCustomerPhone(merchant.phone);
       setCustomerAddress(merchant.area || '');
       setDiscountPct(merchant.discountPct || wholesaleDiscountPct || 15);
-    }
-  };
-
-  // When changing customerType
-  const handleTypeChange = (type) => {
-    setCustomerType(type);
-    setSelectedMerchantId('');
-    if (type === 'retail') {
-      setDiscountPct(0);
-      setCustomerName('');
-      setCustomerPhone('');
-      setCustomerAddress('');
     }
   };
 
@@ -293,64 +283,49 @@ export default function InvoicesManager({
 
           {/* Customer Selection */}
           <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-3">
-            <h4 className="text-xs font-black text-stone-800">1. بيانات العميل ونوع الفاتورة:</h4>
-            
-            {/* Customer Type Radio */}
-            <div className="flex items-center gap-4 text-xs">
-              <label className="flex items-center gap-1.5 cursor-pointer font-bold text-stone-800">
-                <input
-                  type="radio"
-                  name="custType"
-                  checked={customerType === 'retail'}
-                  onChange={() => handleTypeChange('retail')}
-                  className="text-brand-500 focus:ring-brand-400"
-                />
-                <span>عميل عادي / قطاعي (سعر القائمة)</span>
-              </label>
-
-              <label className="flex items-center gap-1.5 cursor-pointer font-bold text-stone-800">
-                <input
-                  type="radio"
-                  name="custType"
-                  checked={customerType === 'wholesale'}
-                  onChange={() => handleTypeChange('wholesale')}
-                  className="text-brand-500 focus:ring-brand-400"
-                />
-                <span>تاجر جملة معتمد (خصم تاجر)</span>
-              </label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 pb-1">
+              <h4 className="text-xs font-black text-stone-900 flex items-center gap-1.5">
+                <User className="w-4 h-4 text-brand-600" />
+                <span>1. بيانات العميل / التاجر:</span>
+              </h4>
+              <span className="text-[11px] text-stone-500">
+                اختر من قائمة التجار المعتمدين ليتم ملء بياناته ونسبة خصمه فوراً، أو اختر "عميل جديد" بدون خصم.
+              </span>
             </div>
 
-            {/* Wholesale Merchant Select (if wholesale) */}
-            {customerType === 'wholesale' && (
-              <div className="pt-2">
-                <label className="text-[11px] font-bold text-stone-600 block mb-1">
-                  اختر تاجر الجملة المسجل:
-                </label>
-                <select
-                  value={selectedMerchantId}
-                  onChange={(e) => handleSelectMerchant(e.target.value)}
-                  className="w-full sm:w-80 p-2.5 rounded-xl border border-stone-300 bg-white text-xs font-bold focus:outline-hidden focus:border-brand-500"
-                >
-                  <option value="">-- اختر من قائمة التجار المعتمدين --</option>
-                  {wholesaleUsers.filter((u) => u.approved).map((m) => (
+            {/* Customer Dropdown (Always prominent!) */}
+            <div>
+              <label className="font-bold text-stone-800 block mb-1 text-xs">
+                اختيار العميل / التاجر (Drop Down) <span className="text-red-500">*</span>:
+              </label>
+              <select
+                value={selectedMerchantId || 'new_retail'}
+                onChange={(e) => handleSelectMerchant(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-bold text-xs focus:outline-hidden focus:border-brand-500 shadow-2xs"
+              >
+                <option value="new_retail">
+                  ➕ عميل جديد / قطاعي (بدون خصم — 0%)
+                </option>
+                <optgroup label="🏪 قائمة تجار الجملة المعتمدين">
+                  {wholesaleUsers.filter((u) => u.approved !== false).map((m) => (
                     <option key={m.id} value={m.id}>
-                      {m.name} ({m.area || m.phone}) - خصم {m.discountPct || wholesaleDiscountPct}%
+                      🏪 {m.name} ({m.area || m.phone}) — خصم {m.discountPct || wholesaleDiscountPct}%
                     </option>
                   ))}
-                </select>
-              </div>
-            )}
+                </optgroup>
+              </select>
+            </div>
 
             {/* Customer Details Input */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
               <div>
-                <label className="font-bold text-stone-700 block mb-1">اسم العميل *:</label>
+                <label className="font-bold text-stone-700 block mb-1">اسم العميل / التاجر <span className="text-red-500">*</span>:</label>
                 <input
                   type="text"
                   required
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="مثال: مدام مريم أو سوبر ماركت..."
+                  placeholder="مثال: سوبر ماركت كارما أو مدام مريم..."
                   className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-bold focus:outline-hidden focus:border-brand-500"
                 />
               </div>
@@ -363,6 +338,7 @@ export default function InvoicesManager({
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="01xxxxxxxxx"
                   className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-mono focus:outline-hidden focus:border-brand-500"
+                  dir="ltr"
                 />
               </div>
 
@@ -376,6 +352,23 @@ export default function InvoicesManager({
                   className="w-full p-2.5 rounded-xl border border-stone-300 bg-white focus:outline-hidden focus:border-brand-500"
                 />
               </div>
+            </div>
+
+            {/* Active customer status pill */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+              {selectedMerchantId && selectedMerchantId !== 'new_retail' ? (
+                <span className="bg-amber-100 text-amber-900 border border-amber-300 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                  <span>🏪 تاجر جملة معتمد: تم تطبيق خصم {discountPct}% تلقائياً على الفاتورة</span>
+                </span>
+              ) : (
+                <span className="bg-stone-200 text-stone-700 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                  <span>👤 عميل جديد / قطاعي: بدون خصم (0%) بسعر المنيو الأصلي</span>
+                </span>
+              )}
+
+              <span className="text-stone-500">
+                (يمكنك تعديل نسبة الخصم يدوياً من أسفل الفاتورة في أي وقت)
+              </span>
             </div>
           </div>
 
