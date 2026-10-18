@@ -672,9 +672,9 @@ export const PRODUCT_TRANSLATIONS_EN = {
     description: "Classic Egyptian macaroni béchamel tray loaded with minced beef and golden mozzarella crust."
   },
   v1: {
-    name: "Vegan Stuffed Vine Leaves",
+    name: "Stuffed Vine Leaves with Rice",
     unit: "1 kg tray",
-    description: "100% plant-based grape leaves with extra virgin olive oil, lemon, pomegranate molasses and Egyptian rice."
+    description: "Tender grape leaves stuffed with spiced Egyptian rice, extra virgin olive oil, lemon, pomegranate molasses and fresh herbs."
   },
   v2: {
     name: "Vegan Stuffed Cabbage",

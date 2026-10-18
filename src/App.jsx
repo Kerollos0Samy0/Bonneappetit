@@ -130,7 +130,22 @@ export default function App() {
   const [products, setProducts] = useState(() => {
     try {
       const saved = localStorage.getItem('bonne_appetit_products_v2');
-      return saved ? JSON.parse(saved) : PRODUCTS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((p) => {
+          if (p.id === 'v1' || (p.name && p.name.includes('ورق عنب نباتي'))) {
+            return {
+              ...p,
+              name: 'ورق عنب بالأرز',
+              description: p.description?.includes('ورق عنب نباتي')
+                ? 'ورق عنب بناتي ناعم محشو بالأرز المصري المبهر بزيت الزيتون والليمون ودبس الرمان وخضار نضرة.'
+                : p.description
+            };
+          }
+          return p;
+        });
+      }
+      return PRODUCTS;
     } catch (e) {
       return PRODUCTS;
     }
