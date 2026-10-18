@@ -11,7 +11,8 @@ import Footer from './components/Footer';
 import { PRODUCTS, BUSINESS_INFO } from './data/products';
 import { DEFAULT_WORKERS, getInitialInventory } from './data/adminDefaults';
 import { UI_TRANSLATIONS, getLocalizedProduct } from './data/translations';
-import { MessageCircle, Phone, Filter } from 'lucide-react';
+import { MessageCircle, Phone, Filter, Bell, Volume2, X } from 'lucide-react';
+import { playLoudOrderAlert, sendDesktopNotification, requestDesktopNotificationPermission } from './utils/orderNotifier';
 
 export default function App() {
   // Cart state
@@ -153,6 +154,45 @@ export default function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
+  const [adminInitialTab, setAdminInitialTab] = useState('inventory');
+  const [incomingOrderAlert, setIncomingOrderAlert] = useState(null);
+
+  // Auto-dismiss incoming order banner after 35 seconds
+  useEffect(() => {
+    if (incomingOrderAlert) {
+      const timer = setTimeout(() => {
+        setIncomingOrderAlert(null);
+      }, 35000);
+      return () => clearTimeout(timer);
+    }
+  }, [incomingOrderAlert]);
+
+  // Cross-tab sync: trigger loud alert and notification when an order is placed from another tab or window
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'bonne_appetit_new_order_event' && e.newValue) {
+        try {
+          const payload = JSON.parse(e.newValue);
+          if (payload && payload.order) {
+            playLoudOrderAlert();
+            sendDesktopNotification(payload.order);
+            setIncomingOrderAlert(payload.order);
+
+            // Sync orders from storage
+            try {
+              const saved = localStorage.getItem('bonne_appetit_orders');
+              if (saved) setOrders(JSON.parse(saved));
+            } catch (err) {}
+          }
+        } catch (err) {
+          console.error("Storage event error:", err);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Language State: 'ar' | 'en'
   const [lang, setLang] = useState(() => {
@@ -287,6 +327,23 @@ export default function App() {
   // Orders Handlers
   const handleSaveOrder = (newOrder) => {
     setOrders((prev) => [newOrder, ...prev]);
+
+    // 1. Play loud POS restaurant chime
+    playLoudOrderAlert();
+
+    // 2. Dispatch native desktop notification
+    sendDesktopNotification(newOrder);
+
+    // 3. Set visual toast/banner alert
+    setIncomingOrderAlert(newOrder);
+
+    // 4. Notify all other open browser tabs/windows (e.g. admin tab open in background)
+    try {
+      localStorage.setItem(
+        'bonne_appetit_new_order_event',
+        JSON.stringify({ order: newOrder, timestamp: Date.now() })
+      );
+    } catch (e) {}
   };
 
   const handleUpdateOrderStatus = (orderId, newStatus) => {
@@ -735,8 +792,87 @@ export default function App() {
           onResetProducts={handleResetProducts}
           businessInfo={businessInfo}
           onUpdateBusinessInfo={handleUpdateBusinessInfo}
+          initialTab={adminInitialTab}
         />
       </ErrorBoundary>
+
+      {/* Realtime Loud Order Alert Toast Banner */}
+      {incomingOrderAlert && (
+        <div className={`fixed top-4 ${lang === 'ar' ? 'left-4 sm:left-6' : 'right-4 sm:right-6'} z-60 max-w-sm sm:max-w-md w-full shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-4`}>
+          <div className="bg-stone-900 text-white rounded-2xl border-2 border-amber-400 p-4 sm:p-5 shadow-2xl relative overflow-hidden backdrop-blur-md">
+            {/* Ambient amber glow */}
+            <div className="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/25 rounded-full blur-xl pointer-events-none" />
+
+            <div className="flex items-start justify-between gap-3 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500 text-stone-900 flex items-center justify-center font-bold shadow-md shrink-0 animate-bounce">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
+                      {lang === 'en' ? 'Incoming New Order!' : 'أوردر جديد وارد الآن!'}
+                    </span>
+                    <span className="text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold">
+                      {lang === 'en' ? 'Loud Alert' : 'صوت تنبيه عالي 🔊'}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-stone-100 mt-0.5">
+                    {incomingOrderAlert.clientName || (lang === 'en' ? 'New Customer' : 'عميل جديد')}
+                  </h4>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIncomingOrderAlert(null)}
+                className="w-7 h-7 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition-colors shrink-0"
+                title={lang === 'en' ? 'Dismiss' : 'إغلاق'}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Order Brief Info */}
+            <div className="mt-3 bg-stone-800/90 rounded-xl p-3 text-xs space-y-1.5 border border-stone-700/60 relative z-10">
+              <div className="flex justify-between items-center text-stone-300">
+                <span>{lang === 'en' ? 'Order Number:' : 'رقم الطلب:'}</span>
+                <span className="font-mono font-bold text-amber-400">{incomingOrderAlert.id}</span>
+              </div>
+              <div className="flex justify-between items-center text-stone-300">
+                <span>{lang === 'en' ? 'Total Amount:' : 'إجمالي الحساب:'}</span>
+                <span className="font-mono font-black text-emerald-400 text-sm">{incomingOrderAlert.totalAmount} ج.م</span>
+              </div>
+              {incomingOrderAlert.itemsSummary && (
+                <div className="text-stone-400 text-[11px] line-clamp-2 pt-1 border-t border-stone-700/50">
+                  {incomingOrderAlert.itemsSummary}
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-3.5 flex items-center gap-2 relative z-10">
+              <button
+                onClick={() => {
+                  setAdminInitialTab('orders');
+                  setIsAdminDashboardOpen(true);
+                  setIncomingOrderAlert(null);
+                }}
+                className="flex-1 py-2 px-3 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md"
+              >
+                <span>{lang === 'en' ? 'Open in Admin Dashboard' : 'عرض الطلب في لوحة التحكم'}</span>
+              </button>
+
+              <button
+                onClick={() => playLoudOrderAlert()}
+                className="p-2 bg-stone-800 hover:bg-stone-700 text-amber-300 rounded-xl transition-all border border-stone-700"
+                title={lang === 'en' ? 'Replay Loud Chime' : 'إعادة تشغيل صوت التنبيه العالي'}
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Call & WhatsApp Pill Button */}
       <div className={`fixed bottom-5 ${lang === 'ar' ? 'left-5' : 'right-5'} z-40 flex items-center gap-2`}>

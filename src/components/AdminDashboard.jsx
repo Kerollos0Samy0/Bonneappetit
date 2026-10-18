@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, ShoppingBag, Users, Percent, DollarSign, CheckCircle2, Clock, 
   Truck, MessageCircle, Trash2, Save, UserPlus, Boxes, UserCheck, 
   Receipt, ArrowDownRight, Package, ArrowUpRight, Lock, ShieldCheck, Key, Eye, EyeOff,
-  Utensils, Globe, Phone
+  Utensils, Globe, Phone, Volume2, Bell
 } from 'lucide-react';
 import { BUSINESS_INFO, PRODUCTS } from '../data/products';
+import { playLoudOrderAlert, requestDesktopNotificationPermission, getNotificationPermissionStatus } from '../utils/orderNotifier';
 import InventoryManager from './admin/InventoryManager';
 import WorkersManager from './admin/WorkersManager';
 import InvoicesManager from './admin/InvoicesManager';
@@ -47,12 +48,34 @@ export default function AdminDashboard({
   onMoveProduct,
   onResetProducts,
   businessInfo,
-  onUpdateBusinessInfo
+  onUpdateBusinessInfo,
+  initialTab = 'inventory'
 }) {
   if (!isOpen) return null;
 
   // Tabs: 'inventory' | 'catalog' | 'workers' | 'invoices' | 'orders' | 'merchants' | 'discount'
-  const [activeTab, setActiveTab] = useState('inventory');
+  const [activeTab, setActiveTab] = useState(initialTab || 'inventory');
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
+
+  // Audio & Notification Testing State
+  const [notificationPermission, setNotificationPermission] = useState(() => getNotificationPermissionStatus());
+  const [isTestingSound, setIsTestingSound] = useState(false);
+
+  const handleTestChime = () => {
+    setIsTestingSound(true);
+    playLoudOrderAlert();
+    setTimeout(() => setIsTestingSound(false), 2200);
+  };
+
+  const handleRequestNotification = async () => {
+    const res = await requestDesktopNotificationPermission();
+    setNotificationPermission(res);
+  };
   
   // Invoice View Modal state
   const [selectedInvoiceForView, setSelectedInvoiceForView] = useState(null);
@@ -231,6 +254,17 @@ export default function AdminDashboard({
 
         {/* Top Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={handleTestChime}
+            className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all shadow-xs"
+            title="تجربة صوت تنبيه الأوردرات الجديد (رنة المطاعم العالية)"
+          >
+            <Volume2 className={`w-3.5 h-3.5 ${isTestingSound ? 'animate-bounce text-amber-200' : ''}`} />
+            <span className="hidden sm:inline">{isTestingSound ? 'جاري التشغيل...' : 'تجربة صوت التنبيه'}</span>
+            <span className="sm:hidden">صوت 🔊</span>
+          </button>
+
           <button
             onClick={onClose}
             className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition-all border border-stone-700 shadow-xs"
@@ -445,6 +479,58 @@ export default function AdminDashboard({
           {/* TAB 4: Website Orders Log */}
           {activeTab === 'orders' && (
             <div className="space-y-4">
+              {/* Loud Sound & Notification Banner Box */}
+              <div className="bg-gradient-to-r from-amber-50 via-stone-50 to-emerald-50 border border-amber-200/90 rounded-2xl p-4 sm:p-5 shadow-xs">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-stone-900 flex items-center justify-center shrink-0 shadow-xs">
+                      <Bell className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-black text-stone-900 text-sm">
+                          نظام التنبيه الصوتي والإشعارات للأوردرات الجديدة
+                        </h4>
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                          مفعل تلقائياً 🔊
+                        </span>
+                      </div>
+                      <p className="text-stone-600 text-xs mt-0.5">
+                        يصدر المتجر رنة تنبيه عالية ومميزة فور إرسال أي أوردر جديد، مع إشعار مكتبي يظهر على شاشتك حتى ولو كانت الصفحة مصغرة.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center flex-wrap gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleTestChime}
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black rounded-xl text-xs transition-all shadow-xs"
+                    >
+                      <Volume2 className={`w-4 h-4 ${isTestingSound ? 'animate-bounce' : ''}`} />
+                      <span>{isTestingSound ? '🔊 الصوت يعمل الآن...' : '🔊 تجربة الصوت العالي'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleRequestNotification}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                        notificationPermission === 'granted'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-stone-900 text-white hover:bg-stone-800 border-stone-800'
+                      }`}
+                    >
+                      <Bell className="w-3.5 h-3.5" />
+                      <span>
+                        {notificationPermission === 'granted'
+                          ? 'إشعارات الشاشة: مفعلة ✓'
+                          : 'تفعيل إشعارات سطح المكتب'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-stone-900 text-sm">
@@ -879,6 +965,68 @@ export default function AdminDashboard({
                   <span>حفظ نسبة الخصم</span>
                 </button>
               </form>
+
+              {/* Loud Sound & Notification Settings Card */}
+              <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-4 shadow-sm text-xs">
+                <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-stone-900 flex items-center justify-center font-bold">
+                      <Volume2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-stone-900 text-base">
+                        تنبيهات الأوردرات الجديدة (الصوت العالي والإشعارات)
+                      </h3>
+                      <p className="text-stone-500 text-[11px]">
+                        رنة تنبيه للمطاعم بصوت مرتفع وإشعارات سطح المكتب المنبثقة فور وصول أي أوردر جديد.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-300">
+                    نشط تلقائياً 🔊
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
+                    <strong className="text-stone-900 block text-xs">تجربة صوت التنبيه (Loud Chime)</strong>
+                    <p className="text-stone-500 text-[11px]">
+                      اضغط للاستماع إلى رنة التنبيه العالية والتأكد من مستوى صوت السماعات بجهازك.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleTestChime}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black rounded-xl text-xs flex items-center gap-2 transition-all shadow-xs"
+                    >
+                      <Volume2 className={`w-4 h-4 ${isTestingSound ? 'animate-bounce' : ''}`} />
+                      <span>{isTestingSound ? '🔊 الصوت يعمل الآن...' : '🔊 تجربة الصوت العالي'}</span>
+                    </button>
+                  </div>
+
+                  <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
+                    <strong className="text-stone-900 block text-xs">إشعارات سطح المكتب (Desktop Notifications)</strong>
+                    <p className="text-stone-500 text-[11px]">
+                      تنبيه يظهر في زاوية الشاشة حتى إذا كنت تتصفح موقعاً آخر أو مصغر المتصفح.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleRequestNotification}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 ${
+                        notificationPermission === 'granted'
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-stone-900 text-white hover:bg-stone-800 border-stone-800'
+                      }`}
+                    >
+                      <Bell className="w-4 h-4" />
+                      <span>
+                        {notificationPermission === 'granted'
+                          ? 'إشعارات الشاشة: مفعلة ومسموح بها ✓'
+                          : 'طلب الإذن وتفعيل إشعارات الشاشة'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               {/* General Store Settings Form (Banner, Phone, WhatsApp) */}
               <form onSubmit={handleSaveStoreSettings} className="bg-white border border-stone-200 rounded-3xl p-6 space-y-4 shadow-sm text-xs">
