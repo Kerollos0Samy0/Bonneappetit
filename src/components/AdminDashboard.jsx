@@ -67,6 +67,8 @@ export default function AdminDashboard({
   const [newMerchantPassword, setNewMerchantPassword] = useState('');
   const [newMerchantDiscount, setNewMerchantDiscount] = useState(wholesaleDiscountPct);
   const [merchantSuccessMsg, setMerchantSuccessMsg] = useState('');
+  const [merchantErrorMsg, setMerchantErrorMsg] = useState('');
+
   // Admin Password Management State
   const [adminUsername, setAdminUsername] = useState(() => {
     try {
@@ -117,11 +119,19 @@ export default function AdminDashboard({
     }
   };
 
-  // Overall Quick Stats
-  const totalOrdersCount = orders.length;
-  const totalInvoicesCount = invoices.length;
-  const totalRevenue = invoices.reduce((acc, i) => acc + (i.total || 0), 0) + orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
-  const totalUnitsInStock = Object.values(inventory || {}).reduce((acc, q) => acc + (q || 0), 0);
+  // Safe Props & Overall Quick Stats
+  const safeOrders = orders || [];
+  const safeInvoices = invoices || [];
+  const safeInventory = inventory || {};
+  const safeWholesaleUsers = wholesaleUsers || [];
+  const safeProducts = products || PRODUCTS;
+
+  const totalOrdersCount = safeOrders.length;
+  const totalInvoicesCount = safeInvoices.length;
+  const totalRevenue = safeInvoices.reduce((acc, i) => acc + (i.total || 0), 0) + safeOrders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
+  const totalUnitsInStock = Object.values(safeInventory).reduce((acc, q) => acc + (q || 0), 0);
+  const totalWholesaleMerchants = safeWholesaleUsers.length;
+
   // Store Settings State (Banner text, Phone, WhatsApp, Slogan)
   const [storePhone, setStorePhone] = useState(() => businessInfo?.phone || BUSINESS_INFO.phone);
   const [storeWhatsapp, setStoreWhatsapp] = useState(() => businessInfo?.whatsapp || BUSINESS_INFO.whatsapp);
@@ -345,7 +355,7 @@ export default function AdminDashboard({
             }`}
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>طلبات الموقع ({orders.length})</span>
+            <span>طلبات الموقع ({safeOrders.length})</span>
           </button>
 
           {/* TAB: Merchants */}
@@ -358,7 +368,7 @@ export default function AdminDashboard({
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>تجار الجملة ({wholesaleUsers.length})</span>
+            <span>تجار الجملة ({safeWholesaleUsers.length})</span>
           </button>
 
           {/* TAB: Settings & Security */}

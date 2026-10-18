@@ -7,7 +7,7 @@ import {
 import { CATEGORIES } from '../../data/products';
 
 export default function ProductCatalogManager({
-  products,
+  products = [],
   onUpdateProduct,
   onToggleProductVisibility,
   onAddProduct,

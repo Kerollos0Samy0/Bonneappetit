@@ -5,12 +5,12 @@ import { generateInvoiceNumber } from '../../data/adminDefaults';
 
 export default function InvoicesManager({
   products = PRODUCTS,
-  invoices,
+  invoices = [],
   onCreateInvoice,
   onCancelInvoice,
-  inventory,
-  wholesaleUsers,
-  wholesaleDiscountPct,
+  inventory = {},
+  wholesaleUsers = [],
+  wholesaleDiscountPct = 15,
   onOpenInvoiceView
 }) {
   // View Toggle: 'list' or 'create'

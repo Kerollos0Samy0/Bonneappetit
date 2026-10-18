@@ -6,6 +6,7 @@ import CartDrawer from './components/CartDrawer';
 import CheckoutModal from './components/CheckoutModal';
 import AuthModal from './components/AuthModal';
 import AdminDashboard from './components/AdminDashboard';
+import ErrorBoundary from './components/ErrorBoundary';
 import Footer from './components/Footer';
 import { PRODUCTS, BUSINESS_INFO } from './data/products';
 import { DEFAULT_WORKERS, getInitialInventory } from './data/adminDefaults';
@@ -648,43 +649,45 @@ export default function App() {
       />
 
       {/* Admin Dashboard */}
-      <AdminDashboard
-        isOpen={isAdminDashboardOpen}
-        onClose={() => setIsAdminDashboardOpen(false)}
-        orders={orders}
-        onUpdateOrderStatus={handleUpdateOrderStatus}
-        wholesaleDiscountPct={wholesaleDiscountPct}
-        onUpdateWholesaleDiscount={handleUpdateWholesaleDiscount}
-        wholesaleUsers={wholesaleUsers}
-        onToggleUserApproval={handleToggleUserApproval}
-        onAddWholesaleMerchant={handleRegisterWholesale}
-        onDeleteWholesaleMerchant={handleDeleteWholesaleMerchant}
-        onClearOrders={handleClearOrders}
-        // New Props
-        inventory={inventory}
-        onUpdateStock={handleUpdateStock}
-        stockMovements={stockMovements}
-        onAddStockMovement={handleAddStockMovement}
-        workers={workers}
-        onAddWorker={handleAddWorker}
-        onDeleteWorker={handleDeleteWorker}
-        productionLogs={productionLogs}
-        onLogProduction={handleLogProduction}
-        onDeleteProductionLog={handleDeleteProductionLog}
-        invoices={invoices}
-        onCreateInvoice={handleCreateInvoice}
-        onCancelInvoice={handleCancelInvoice}
-        // Catalog & Store Control
-        products={products}
-        onUpdateProduct={handleUpdateProduct}
-        onToggleProductVisibility={handleToggleProductVisibility}
-        onAddProduct={handleAddProduct}
-        onDeleteProduct={handleDeleteProduct}
-        onMoveProduct={handleMoveProduct}
-        onResetProducts={handleResetProducts}
-        businessInfo={businessInfo}
-        onUpdateBusinessInfo={handleUpdateBusinessInfo}
-      />
+      <ErrorBoundary>
+        <AdminDashboard
+          isOpen={isAdminDashboardOpen}
+          onClose={() => setIsAdminDashboardOpen(false)}
+          orders={orders}
+          onUpdateOrderStatus={handleUpdateOrderStatus}
+          wholesaleDiscountPct={wholesaleDiscountPct}
+          onUpdateWholesaleDiscount={handleUpdateWholesaleDiscount}
+          wholesaleUsers={wholesaleUsers}
+          onToggleUserApproval={handleToggleUserApproval}
+          onAddWholesaleMerchant={handleRegisterWholesale}
+          onDeleteWholesaleMerchant={handleDeleteWholesaleMerchant}
+          onClearOrders={handleClearOrders}
+          // New Props
+          inventory={inventory}
+          onUpdateStock={handleUpdateStock}
+          stockMovements={stockMovements}
+          onAddStockMovement={handleAddStockMovement}
+          workers={workers}
+          onAddWorker={handleAddWorker}
+          onDeleteWorker={handleDeleteWorker}
+          productionLogs={productionLogs}
+          onLogProduction={handleLogProduction}
+          onDeleteProductionLog={handleDeleteProductionLog}
+          invoices={invoices}
+          onCreateInvoice={handleCreateInvoice}
+          onCancelInvoice={handleCancelInvoice}
+          // Catalog & Store Control
+          products={products}
+          onUpdateProduct={handleUpdateProduct}
+          onToggleProductVisibility={handleToggleProductVisibility}
+          onAddProduct={handleAddProduct}
+          onDeleteProduct={handleDeleteProduct}
+          onMoveProduct={handleMoveProduct}
+          onResetProducts={handleResetProducts}
+          businessInfo={businessInfo}
+          onUpdateBusinessInfo={handleUpdateBusinessInfo}
+        />
+      </ErrorBoundary>
 
       {/* Floating Call & WhatsApp Pill Button */}
       <div className="fixed bottom-5 left-5 z-40 flex items-center gap-2">

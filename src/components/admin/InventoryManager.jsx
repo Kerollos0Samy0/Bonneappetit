@@ -4,9 +4,9 @@ import { PRODUCTS, CATEGORIES } from '../../data/products';
 
 export default function InventoryManager({
   products = PRODUCTS,
-  inventory,
+  inventory = {},
   onUpdateStock,
-  stockMovements,
+  stockMovements = [],
   onAddStockMovement
 }) {
   const [searchTerm, setSearchTerm] = useState('');

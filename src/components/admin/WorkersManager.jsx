@@ -4,13 +4,13 @@ import { PRODUCTS } from '../../data/products';
 
 export default function WorkersManager({
   products = PRODUCTS,
-  workers,
+  workers = [],
   onAddWorker,
   onDeleteWorker,
-  productionLogs,
+  productionLogs = [],
   onLogProduction,
   onDeleteProductionLog,
-  inventory
+  inventory = {}
 }) {
   // New Production Entry State
   const [selectedWorkerId, setSelectedWorkerId] = useState('');
