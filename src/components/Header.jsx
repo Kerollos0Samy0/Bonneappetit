@@ -21,7 +21,7 @@ export default function Header({
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
           
           <div className="flex items-center gap-3">
-            <span>🛵 شحن مجاني للطلبات من 20 كجم | خصم 50% من 10 كجم</span>
+            <span>🛵 الشحن: خصم 50% (من 10 كجم) | مجاني (من 20 كجم فأكثر)</span>
             
             {/* Wholesale Merchant Active Banner */}
             {currentUser?.role === 'wholesale' && (

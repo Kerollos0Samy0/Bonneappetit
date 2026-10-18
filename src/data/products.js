@@ -8,7 +8,7 @@ export const BUSINESS_INFO = {
   phone2: "01055082964",
   phone2Display: "01055082964",
   storageTemp: "-18°C في الفريزر",
-  shippingPolicy: "شحن مجاني من 20 كجم فأكثر | خصم 50% من 10 كجم",
+  shippingPolicy: "الشحن: خصم 50% (من 10 كجم) | مجاني (من 20 كجم فأكثر)",
   defaultWholesaleDiscount: 15, // 15% wholesale discount
   adminCredentials: {
     username: "admin",
