@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { playLoudOrderAlert, requestDesktopNotificationPermission, getNotificationPermissionStatus } from '../utils/orderNotifier';
 import { UI_TRANSLATIONS } from '../data/translations';
+import { PRODUCTS, BUSINESS_INFO } from '../data/products';
 import InventoryManager from './admin/InventoryManager';
 import WorkersManager from './admin/WorkersManager';
 import InvoicesManager from './admin/InvoicesManager';
