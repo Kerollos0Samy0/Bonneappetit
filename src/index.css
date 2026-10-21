@@ -5,7 +5,36 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
+
+  /* Disable annoying mobile tap gray box */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Enable fast response without 300ms mobile touch delay */
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
+}
+
+/* Safe area padding utilities for notched mobile phones */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+}
+
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
+}
+
+/* Hide scrollbar utility for horizontal scroll chips */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Custom modern scrollbar */

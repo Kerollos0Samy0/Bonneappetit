@@ -16,29 +16,38 @@ export default function CategoryFilter({
     return cat.name;
   };
 
+  const getCatEmoji = (catId) => {
+    switch (catId) {
+      case 'all': return '🍽️';
+      case 'special': return '⭐';
+      case 'fish': return '🐟';
+      case 'poultry': return '🍗';
+      case 'beef': return '🥩';
+      case 'vegetables': return '🥬';
+      default: return '🍲';
+    }
+  };
+
   return (
-    <div className="bg-white border-b border-stone-200 sticky top-[95px] sm:top-[85px] z-30 py-2.5 px-4 shadow-xs">
-      <div className="max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar">
+    <div className="bg-stone-50/95 sm:bg-white border-b border-stone-200 py-2 px-3 sm:px-4 shadow-xs">
+      <div className="max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5">
         {CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat.id;
           const displayName = getCatName(cat);
+          const emoji = getCatEmoji(cat.id);
           
           return (
             <button
               key={cat.id}
               onClick={() => onSelectCategory(cat.id)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 border ${
+              className={`min-h-[36px] px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 border active:scale-95 touch-manipulation ${
                 isActive
-                  ? cat.activeStyle
-                  : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100 hover:text-stone-900'
+                  ? cat.activeStyle + ' shadow-xs ring-1 ring-stone-900/10'
+                  : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100 hover:text-stone-900'
               }`}
             >
-              {/* Colored Dot matching cover image badges */}
-              <span
-                className={`w-2.5 h-2.5 rounded-full shrink-0 transition-transform ${
-                  isActive ? 'bg-white scale-110' : cat.dotColor
-                }`}
-              />
+              {/* Category Emoji & Colored Dot */}
+              <span className="text-sm shrink-0">{emoji}</span>
               
               <span>{displayName}</span>
 

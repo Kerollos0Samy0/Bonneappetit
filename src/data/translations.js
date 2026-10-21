@@ -19,6 +19,21 @@ export const UI_TRANSLATIONS = {
     searchPlaceholder: "ابحث في قائمة الطعام...",
     cart: "السلة",
 
+    // Mobile Navigation & UX
+    mobileNavMenu: "المنيو",
+    mobileNavFasting: "صيامي",
+    mobileNavCart: "السلة",
+    mobileNavSearch: "بحث",
+    mobileNavContact: "تواصل",
+    mobileQuickCheckout: "إتمام الطلب",
+    mobileItemsCount: "أصناف",
+    contactSheetTitle: "خدمة عملاء بونابيتي",
+    contactSheetCall: "اتصال هاتفي مباشر",
+    contactSheetWhatsApp: "طلب عبر واتساب",
+    contactSheetWholesale: "دخول تجار الجملة / الإدارة",
+    contactSheetClose: "إغلاق",
+    mobileFreeShippingShort: "شحن مجاني فوق 20 كجم",
+
     // Categories
     cat_all: "جميع الأصناف",
     cat_special: "سبشيال",
@@ -284,6 +299,21 @@ export const UI_TRANSLATIONS = {
     slogan: "Premium Homemade Ready-to-Cook Gourmet Meals",
     searchPlaceholder: "Search the menu...",
     cart: "Cart",
+
+    // Mobile Navigation & UX
+    mobileNavMenu: "Menu",
+    mobileNavFasting: "Fasting",
+    mobileNavCart: "Cart",
+    mobileNavSearch: "Search",
+    mobileNavContact: "Contact",
+    mobileQuickCheckout: "Checkout",
+    mobileItemsCount: "items",
+    contactSheetTitle: "Bonne Appetit Customer Care",
+    contactSheetCall: "Direct Phone Call",
+    contactSheetWhatsApp: "Order via WhatsApp",
+    contactSheetWholesale: "Wholesale / Admin Login",
+    contactSheetClose: "Close",
+    mobileFreeShippingShort: "Free Shipping > 20kg",
 
     // Categories
     cat_all: "All Dishes",

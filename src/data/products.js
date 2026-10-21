@@ -131,7 +131,7 @@ export const CATEGORIES = [
   }
 ];
 
-export const PRODUCTS = [
+const RAW_PRODUCTS = [
   // ==========================================
   // 1. سبشيال (SPECIAL - Purple) [لفترة محدودة]
   // ==========================================
@@ -563,3 +563,10 @@ export const PRODUCTS = [
     isFasting: true
   }
 ];
+
+export const PRODUCTS = RAW_PRODUCTS.map((p) => ({
+  ...p,
+  wholesalePrice: (p.wholesalePrice !== undefined && p.wholesalePrice !== null && Number(p.wholesalePrice) > 0)
+    ? Number(p.wholesalePrice)
+    : Math.round(Number(p.price || 0) * 0.85)
+}));

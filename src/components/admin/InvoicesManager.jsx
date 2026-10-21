@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Receipt, Plus, Search, Trash2, Printer, Eye, MessageCircle, AlertTriangle, CheckCircle2, User, DollarSign, CreditCard, ShoppingBag, ArrowDownRight, Phone } from 'lucide-react';
+import { Receipt, Plus, Search, Trash2, Printer, Eye, MessageCircle, AlertTriangle, CheckCircle2, User, DollarSign, CreditCard, ShoppingBag, ArrowDownRight, Phone, FileText } from 'lucide-react';
 import { PRODUCTS, BUSINESS_INFO } from '../../data/products';
 import { generateInvoiceNumber } from '../../data/adminDefaults';
 import { UI_TRANSLATIONS, getLocalizedProduct } from '../../data/translations';
+import ProductCombobox from './ProductCombobox';
 
 export default function InvoicesManager({
   products = PRODUCTS,
@@ -13,6 +14,7 @@ export default function InvoicesManager({
   wholesaleUsers = [],
   wholesaleDiscountPct = 15,
   onOpenInvoiceView,
+  onOpenA4Quotation,
   lang = 'ar',
   t
 }) {
@@ -72,7 +74,15 @@ export default function InvoicesManager({
     setCurrentProductId(prodId);
     const prod = products.find((p) => p.id === prodId);
     if (prod) {
-      setCustomPrice(String(prod.price));
+      const isMerchant = customerType === 'wholesale' || (selectedMerchantId && selectedMerchantId !== 'custom');
+      if (isMerchant) {
+        const wholesalePriceVal = (prod.wholesalePrice !== undefined && prod.wholesalePrice !== null && Number(prod.wholesalePrice) > 0)
+          ? Number(prod.wholesalePrice)
+          : Math.round(prod.price * (1 - (discountPct || wholesaleDiscountPct || 15) / 100));
+        setCustomPrice(String(wholesalePriceVal));
+      } else {
+        setCustomPrice(String(prod.price));
+      }
     } else {
       setCustomPrice('');
     }
@@ -382,25 +392,20 @@ export default function InvoicesManager({
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs">
               
-              {/* Product Select */}
+              {/* Product Select with Combobox (Type & Dropdown) */}
               <div className="sm:col-span-6">
-                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Select Dish from Stock:' : 'اختر الصنف من المخزن:'}</label>
-                <select
-                  value={currentProductId}
-                  onChange={(e) => handleProductSelect(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium focus:outline-hidden focus:border-brand-500"
-                >
-                  <option value="">{lang === 'en' ? '-- Select a dish --' : '-- اختر صنفاً --'}</option>
-                  {products.map((prod) => {
-                    const localized = getLocalizedProduct(prod, lang);
-                    const stock = inventory[prod.id] || 0;
-                    return (
-                      <option key={prod.id} value={prod.id}>
-                        {localized.name} | {lang === 'en' ? 'Stock:' : 'رصيد المخزن:'} [{stock}] {localized.unit} - {prod.price} {activeT.currency}
-                      </option>
-                    );
-                  })}
-                </select>
+                <label className="font-bold text-stone-700 block mb-1">
+                  {lang === 'en' ? 'Select Dish from Stock:' : 'اختر الصنف من المخزن:'}
+                </label>
+                <ProductCombobox
+                  products={products}
+                  inventory={inventory}
+                  selectedProductId={currentProductId}
+                  onSelectProduct={(prodId) => handleProductSelect(prodId)}
+                  lang={lang}
+                  currency={activeT.currency}
+                  placeholder={lang === 'en' ? '-- Type to search or pick from list --' : '-- اكتب للبحث أو اختر من القائمة --'}
+                />
               </div>
 
               {/* Quantity */}
@@ -738,6 +743,15 @@ export default function InvoicesManager({
                             className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
                           >
                             <Printer className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => (onOpenA4Quotation ? onOpenA4Quotation(inv) : onOpenInvoiceView(inv))}
+                            title={lang === 'en' ? 'Official A4 Quotation / Confirmation' : 'عرض سعر رسمي A4 ومشاركته واتساب'}
+                            className="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 transition-colors border border-amber-300 flex items-center gap-1 font-bold text-[11px]"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-amber-600" />
+                            <span>A4</span>
                           </button>
 
                           <button

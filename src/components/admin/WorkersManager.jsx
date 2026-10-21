@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { UserCheck, Plus, Search, Calendar, Clock, CheckCircle2, AlertCircle, Trash2, UserPlus, Filter, Award, Boxes, Sparkles } from 'lucide-react';
 import { PRODUCTS } from '../../data/products';
 import { UI_TRANSLATIONS, getLocalizedProduct } from '../../data/translations';
+import ProductCombobox from './ProductCombobox';
 
 export default function WorkersManager({
   products = PRODUCTS,
@@ -253,27 +254,20 @@ export default function WorkersManager({
             </select>
           </div>
 
-          {/* Product Dropdown */}
+          {/* Product Dropdown & Search Combobox */}
           <div>
             <label className="font-bold text-stone-700 block mb-1">
               {lang === 'en' ? 'Produced Dish / Item' : 'الصنف / المنتج المُصنع'} <span className="text-red-500">*</span>:
             </label>
-            <select
-              value={selectedProductId}
-              onChange={(e) => setSelectedProductId(e.target.value)}
-              required
-              className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium focus:outline-hidden focus:border-brand-500"
-            >
-              <option value="">{lang === 'en' ? '-- Select Dish from Menu --' : '-- اختر الصنف من المنيو --'}</option>
-              {products.map((prod) => {
-                const localized = getLocalizedProduct(prod, lang);
-                return (
-                  <option key={prod.id} value={prod.id}>
-                    {localized.name} ({lang === 'en' ? 'Stock:' : 'المخزون الحالي:'} {inventory[prod.id] || 0} {localized.unit})
-                  </option>
-                );
-              })}
-            </select>
+            <ProductCombobox
+              products={products}
+              inventory={inventory}
+              selectedProductId={selectedProductId}
+              onSelectProduct={(prodId) => setSelectedProductId(prodId)}
+              lang={lang}
+              currency="ج.م"
+              placeholder={lang === 'en' ? '-- Type to search or select dish --' : '-- اكتب للبحث أو اختر من القائمة --'}
+            />
           </div>
 
           {/* Quantity */}

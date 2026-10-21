@@ -146,14 +146,18 @@ export default function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
       <div
-        className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 relative my-6 max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-stone-200 relative max-h-[92vh] overflow-y-auto pb-safe animate-in slide-in-from-bottom duration-200"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile handle indicator */}
+        <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mb-3 sm:hidden" />
+
         <button
           onClick={onClose}
-          className={`absolute top-4 ${lang === 'ar' ? 'left-4' : 'right-4'} w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center text-stone-600`}
+          className={`absolute top-4 ${lang === 'ar' ? 'left-4' : 'right-4'} w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-600 active:scale-95`}
+          aria-label="إغلاق"
         >
           <X className="w-5 h-5" />
         </button>
@@ -166,7 +170,7 @@ export default function CheckoutModal({
             <h3 className="text-xl font-black text-stone-900">
               {lang === 'en' ? 'Order Sent to WhatsApp!' : 'تم إرسال الأوردر لواتساب بونابيتي!'}
             </h3>
-            <p className="text-xs text-stone-600">
+            <p className="text-xs text-stone-600 leading-relaxed">
               {lang === 'en' ? 'Your order details were sent directly to WhatsApp:' : 'تم إرسال تفاصيل طلبك مباشرة على واتساب رقم:'}
               <br />
               <strong className="font-mono text-stone-900 text-sm mt-1 inline-block" dir="ltr">
@@ -175,7 +179,7 @@ export default function CheckoutModal({
             </p>
             <button
               onClick={onClose}
-              className="mt-4 bg-stone-900 text-white text-xs font-bold px-6 py-2 rounded-lg"
+              className="mt-4 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-xs active:scale-95 touch-manipulation"
             >
               {lang === 'en' ? 'Return to Store' : 'العودة للمتجر'}
             </button>
@@ -186,12 +190,12 @@ export default function CheckoutModal({
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-black text-stone-900">{t.checkoutTitle}</h2>
                 {isWholesale && (
-                  <span className="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded border border-amber-300">
+                  <span className="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-md border border-amber-300">
                     {t.wholesaleBadge} (-{wholesaleDiscountPct}%)
                   </span>
                 )}
               </div>
-              <p className="text-xs text-stone-500 mt-0.5">
+              <p className="text-xs text-stone-500 mt-1">
                 {t.total} <strong>{totalAmount} {t.currency}</strong> ({totalWeight} {t.kg})
                 {isWholesale && savings > 0 && (
                   <span className="text-emerald-700 font-bold mx-2">
@@ -201,7 +205,7 @@ export default function CheckoutModal({
               </p>
             </div>
 
-            <form onSubmit={handleSendWhatsApp} className="space-y-3 text-xs">
+            <form onSubmit={handleSendWhatsApp} className="space-y-3.5 text-xs">
               <div>
                 <label className="block font-bold text-stone-700 mb-1">
                   {t.fullName}
@@ -213,7 +217,7 @@ export default function CheckoutModal({
                   value={formData.clientName}
                   onChange={handleChange}
                   placeholder={t.fullNamePlaceholder}
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-xs bg-stone-50 focus:bg-white border border-stone-200 focus:border-stone-500 rounded-xl focus:outline-hidden transition-colors"
                 />
               </div>
 
@@ -225,10 +229,11 @@ export default function CheckoutModal({
                   type="tel"
                   name="phone"
                   required
+                  inputMode="tel"
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder={t.phonePlaceholder}
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500 font-mono"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-xs bg-stone-50 focus:bg-white border border-stone-200 focus:border-stone-500 rounded-xl focus:outline-hidden font-mono transition-colors"
                   dir="ltr"
                 />
               </div>
@@ -244,7 +249,7 @@ export default function CheckoutModal({
                   value={formData.address}
                   onChange={handleChange}
                   placeholder={t.addressPlaceholder}
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-xs bg-stone-50 focus:bg-white border border-stone-200 focus:border-stone-500 rounded-xl focus:outline-hidden transition-colors"
                 />
               </div>
 
@@ -258,7 +263,7 @@ export default function CheckoutModal({
                   value={formData.deliveryDate}
                   onChange={handleChange}
                   placeholder={lang === 'en' ? 'e.g. Tomorrow at 2:00 PM' : 'مثال: غداً الساعة 2 ظهراً'}
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-xs bg-stone-50 focus:bg-white border border-stone-200 focus:border-stone-500 rounded-xl focus:outline-hidden transition-colors"
                 />
               </div>
 
@@ -272,21 +277,21 @@ export default function CheckoutModal({
                   value={formData.notes}
                   onChange={handleChange}
                   placeholder={t.notesPlaceholder}
-                  className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-hidden focus:border-stone-500"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-xs bg-stone-50 focus:bg-white border border-stone-200 focus:border-stone-500 rounded-xl focus:outline-hidden transition-colors"
                 />
               </div>
 
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm shadow-md"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black py-3.5 sm:py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all text-sm shadow-lg active:scale-98 touch-manipulation"
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>{t.sendOrderWhatsApp} ({BUSINESS_INFO.phoneDisplay})</span>
+                  <MessageCircle className="w-5 h-5" />
+                  <span>{t.sendOrderWhatsApp}</span>
                 </button>
               </div>
 
-              <div className="text-center text-[11px] text-stone-500 pt-1">
+              <div className="text-center text-[11px] text-stone-500 pt-1 leading-relaxed">
                 {t.orderSentNotice}
               </div>
             </form>

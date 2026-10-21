@@ -90,26 +90,31 @@ export default function AuthModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs">
       <div
-        className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 relative animate-scale-up"
+        className="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-stone-200 relative max-h-[92vh] overflow-y-auto pb-safe animate-in slide-in-from-bottom duration-200"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile handle indicator */}
+        <div className="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mb-3 sm:hidden" />
+
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center text-stone-500 transition-colors"
+          className="absolute top-4 left-4 w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-500 transition-colors active:scale-95"
+          aria-label="إغلاق"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Tabs (Only 2 Tabs: Wholesale Login & Admin Login) */}
-        <div className="flex border-b border-stone-200 mb-6 text-xs font-bold">
+        {/* Modal Tabs */}
+        <div className="flex border-b border-stone-200 mb-5 text-xs font-bold">
           <button
+            type="button"
             onClick={() => handleTabChange('wholesale_login')}
-            className={`flex-1 pb-3 text-center transition-colors border-b-2 ${
+            className={`flex-1 pb-3 text-center transition-colors border-b-2 touch-manipulation ${
               activeTab === 'wholesale_login'
-                ? 'border-brand-500 text-brand-600'
+                ? 'border-brand-500 text-brand-600 font-black'
                 : 'border-transparent text-stone-500 hover:text-stone-800'
             }`}
           >
@@ -117,10 +122,11 @@ export default function AuthModal({
           </button>
           
           <button
+            type="button"
             onClick={() => handleTabChange('admin')}
-            className={`flex-1 pb-3 text-center transition-colors border-b-2 ${
+            className={`flex-1 pb-3 text-center transition-colors border-b-2 touch-manipulation ${
               activeTab === 'admin'
-                ? 'border-brand-500 text-brand-600'
+                ? 'border-brand-500 text-brand-600 font-black'
                 : 'border-transparent text-stone-500 hover:text-stone-800'
             }`}
           >
@@ -148,14 +154,14 @@ export default function AuthModal({
             <div>
               <label className="block font-bold text-stone-700 mb-1">رقم الموبايل أو اسم الحساب المسجل</label>
               <div className="relative">
-                <Phone className="w-4 h-4 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                <Phone className="w-4 h-4 text-stone-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   required
-                  placeholder="رقم الموبايل أو اسم الحساب (مثل karma أو mina)"
+                  placeholder="رقم الموبايل أو اسم الحساب"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pr-9 pl-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-brand-500"
+                  className="w-full pr-10 pl-3.5 py-2.5 text-base sm:text-xs bg-stone-50 focus:bg-white border border-stone-200 rounded-xl focus:outline-hidden focus:border-brand-500 transition-colors"
                 />
               </div>
             </div>
@@ -163,25 +169,25 @@ export default function AuthModal({
             <div>
               <label className="block font-bold text-stone-700 mb-1">كلمة المرور</label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-stone-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pr-9 pl-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-brand-500"
+                  className="w-full pr-10 pl-3.5 py-2.5 text-base sm:text-xs bg-stone-50 focus:bg-white border border-stone-200 rounded-xl focus:outline-hidden focus:border-brand-500 transition-colors"
                 />
               </div>
             </div>
 
-            <div className="p-2.5 bg-stone-100 rounded-lg border border-stone-200 text-[11px] text-stone-600 leading-relaxed">
+            <div className="p-3 bg-stone-100 rounded-xl border border-stone-200 text-[11px] text-stone-600 leading-relaxed">
               💡 <strong>تجار الجملة المعتمدين:</strong> يمكنكم تسجيل الدخول برقم الموبايل أو اسم الحساب وكلمة المرور المسلمة لكم من إدارة بونابيتي لتطبيق الخصم فوراً.
             </div>
 
             <button
               type="submit"
-              className="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold py-2.5 px-4 rounded-lg transition-colors text-xs"
+              className="w-full bg-stone-900 hover:bg-stone-800 active:bg-brand-600 text-white font-bold py-3 sm:py-2.5 px-4 rounded-xl transition-all text-xs active:scale-98 touch-manipulation shadow-md"
             >
               دخول واستعراض أسعار الجملة
             </button>
@@ -201,14 +207,14 @@ export default function AuthModal({
             <div>
               <label className="block font-bold text-stone-700 mb-1">اسم المستخدم</label>
               <div className="relative">
-                <User className="w-4 h-4 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-stone-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   required
                   placeholder=""
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pr-9 pl-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-brand-500 font-mono text-left"
+                  className="w-full pr-10 pl-3.5 py-2.5 text-base sm:text-xs bg-stone-50 focus:bg-white border border-stone-200 rounded-xl focus:outline-hidden focus:border-brand-500 font-mono text-left transition-colors"
                   dir="ltr"
                 />
               </div>
@@ -217,14 +223,14 @@ export default function AuthModal({
             <div>
               <label className="block font-bold text-stone-700 mb-1">كلمة المرور</label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-stone-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
                   placeholder=""
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pr-9 pl-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:border-brand-500 font-mono text-left"
+                  className="w-full pr-10 pl-3.5 py-2.5 text-base sm:text-xs bg-stone-50 focus:bg-white border border-stone-200 rounded-xl focus:outline-hidden focus:border-brand-500 font-mono text-left transition-colors"
                   dir="ltr"
                 />
               </div>
@@ -232,7 +238,7 @@ export default function AuthModal({
 
             <button
               type="submit"
-              className="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold py-2.5 px-4 rounded-lg transition-colors text-xs flex items-center justify-center gap-1.5"
+              className="w-full bg-stone-900 hover:bg-stone-800 active:bg-brand-600 text-white font-bold py-3 sm:py-2.5 px-4 rounded-xl transition-all text-xs flex items-center justify-center gap-1.5 active:scale-98 touch-manipulation shadow-md"
             >
               <ShieldCheck className="w-4 h-4 text-brand-400" />
               <span>تسجيل الدخول</span>

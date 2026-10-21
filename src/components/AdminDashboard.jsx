@@ -3,7 +3,7 @@ import {
   X, ShoppingBag, Users, Percent, DollarSign, CheckCircle2, Clock, 
   Truck, MessageCircle, Trash2, Save, UserPlus, Boxes, UserCheck, 
   Receipt, ArrowDownRight, Package, ArrowUpRight, Lock, ShieldCheck, Key, Eye, EyeOff,
-  Utensils, Globe, Phone, Volume2, Bell
+  Utensils, Globe, Phone, Volume2, Bell, Layers, Wallet, AlertOctagon, FileText
 } from 'lucide-react';
 import { BUSINESS_INFO, PRODUCTS } from '../data/products';
 import { playLoudOrderAlert, requestDesktopNotificationPermission, getNotificationPermissionStatus } from '../utils/orderNotifier';
@@ -13,6 +13,10 @@ import WorkersManager from './admin/WorkersManager';
 import InvoicesManager from './admin/InvoicesManager';
 import ProductCatalogManager from './admin/ProductCatalogManager';
 import InvoiceViewModal from './admin/InvoiceViewModal';
+import RawMaterialsManager from './admin/RawMaterialsManager';
+import ExpensesManager from './admin/ExpensesManager';
+import WasteManager from './admin/WasteManager';
+import A4QuotationModal from './admin/A4QuotationModal';
 
 export default function AdminDashboard({
   isOpen,
@@ -40,6 +44,21 @@ export default function AdminDashboard({
   invoices,
   onCreateInvoice,
   onCancelInvoice,
+  // Raw Materials & Recipes
+  rawMaterials = [],
+  onUpdateRawMaterial,
+  onAddRawMaterial,
+  onDeleteRawMaterial,
+  recipes = {},
+  onUpdateRecipe,
+  // Expenses & Net Profit
+  expenses = [],
+  onAddExpense,
+  onDeleteExpense,
+  // Spoilage & Waste
+  wasteLogs = [],
+  onLogWaste,
+  onDeleteWasteLog,
   // Catalog & Store Control
   products = PRODUCTS,
   onUpdateProduct,
@@ -84,6 +103,9 @@ export default function AdminDashboard({
   
   // Invoice View Modal state
   const [selectedInvoiceForView, setSelectedInvoiceForView] = useState(null);
+
+  // A4 Quotation Modal state (Works for both invoices & store orders)
+  const [selectedDocForA4Quotation, setSelectedDocForA4Quotation] = useState(null);
 
   // Wholesale Discount State
   const [newDiscount, setNewDiscount] = useState(wholesaleDiscountPct);
@@ -290,9 +312,10 @@ export default function AdminDashboard({
           {/* Return to Store */}
           <button
             onClick={onClose}
-            className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition-all border border-stone-700 shadow-xs"
+            className="flex items-center gap-1.5 px-2.5 sm:px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition-all border border-stone-700 shadow-xs"
+            title={t.adminBackToStore}
           >
-            <span>{t.adminBackToStore}</span>
+            <span className="hidden sm:inline">{t.adminBackToStore}</span>
             <span className="text-sm">🏪</span>
           </button>
 
@@ -373,7 +396,7 @@ export default function AdminDashboard({
             }`}
           >
             <Utensils className="w-4 h-4" />
-            <span>{t.adminTabCatalog} ({products.length})</span>
+            <span>{lang === 'en' ? 'Menu & Price Control' : 'المنيو والأسعار والصور 🏷️'} ({products.length})</span>
           </button>
 
           {/* TAB: Workers Production */}
@@ -413,6 +436,45 @@ export default function AdminDashboard({
           >
             <ShoppingBag className="w-4 h-4" />
             <span>{t.adminTabOrders} ({safeOrders.length})</span>
+          </button>
+
+          {/* TAB: Raw Materials & Recipes */}
+          <button
+            onClick={() => setActiveTab('raw_materials')}
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'raw_materials'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>{lang === 'en' ? 'Raw Materials & Recipes' : 'مخزن الخامات والخلطات'}</span>
+          </button>
+
+          {/* TAB: Expenses & Net Profit */}
+          <button
+            onClick={() => setActiveTab('expenses')}
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'expenses'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <Wallet className="w-4 h-4" />
+            <span>{lang === 'en' ? 'Expenses & Net Profit' : 'المصاريف الإدارية'}</span>
+          </button>
+
+          {/* TAB: Spoilage & Waste */}
+          <button
+            onClick={() => setActiveTab('waste')}
+            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+              activeTab === 'waste'
+                ? 'border-brand-500 text-brand-600 bg-brand-50/40'
+                : 'border-transparent text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <AlertOctagon className="w-4 h-4" />
+            <span>{lang === 'en' ? 'Waste & Spoilage' : 'سجل الهالك'}</span>
           </button>
 
           {/* TAB: Merchants */}
@@ -455,6 +517,9 @@ export default function AdminDashboard({
               onUpdateStock={onUpdateStock}
               stockMovements={stockMovements}
               onAddStockMovement={onAddStockMovement}
+              onUpdateProduct={onUpdateProduct}
+              onAddProduct={onAddProduct}
+              wholesaleDiscountPct={wholesaleDiscountPct}
               lang={lang}
               t={t}
             />
@@ -470,6 +535,9 @@ export default function AdminDashboard({
               onDeleteProduct={onDeleteProduct}
               onMoveProduct={onMoveProduct}
               onResetProducts={onResetProducts}
+              inventory={inventory}
+              onUpdateStock={onUpdateStock}
+              wholesaleDiscountPct={wholesaleDiscountPct}
               lang={lang}
               t={t}
             />
@@ -502,6 +570,7 @@ export default function AdminDashboard({
               wholesaleUsers={wholesaleUsers}
               wholesaleDiscountPct={wholesaleDiscountPct}
               onOpenInvoiceView={(inv) => setSelectedInvoiceForView(inv)}
+              onOpenA4Quotation={(inv) => setSelectedDocForA4Quotation(inv)}
               lang={lang}
               t={t}
             />
@@ -661,17 +730,29 @@ export default function AdminDashboard({
                             </span>
                           </td>
                           <td className="p-3 text-center">
-                            <select
-                              value={order.status}
-                              onChange={(e) => onUpdateOrderStatus(order.id, e.target.value)}
-                              className="p-1 border border-stone-300 rounded text-xs bg-white focus:outline-none"
-                            >
-                              <option value="جديد">{t.statusNew}</option>
-                              <option value="قيد التجهيز">{t.statusPreparing}</option>
-                              <option value="تم الشحن">{t.statusShipped}</option>
-                              <option value="مكتمل ومستلم">{t.statusDelivered}</option>
-                              <option value="ملغي">{t.statusCancelled}</option>
-                            </select>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <select
+                                value={order.status}
+                                onChange={(e) => onUpdateOrderStatus(order.id, e.target.value)}
+                                className="p-1 border border-stone-300 rounded text-xs bg-white focus:outline-none"
+                              >
+                                <option value="جديد">{t.statusNew}</option>
+                                <option value="قيد التجهيز">{t.statusPreparing}</option>
+                                <option value="تم الشحن">{t.statusShipped}</option>
+                                <option value="مكتمل ومستلم">{t.statusDelivered}</option>
+                                <option value="ملغي">{t.statusCancelled}</option>
+                              </select>
+
+                              <button
+                                type="button"
+                                onClick={() => setSelectedDocForA4Quotation(order)}
+                                title={lang === 'en' ? 'Official A4 Quotation / Print' : 'إنشاء وطباعة عرض سعر رسمي A4 ومشاركته واتساب'}
+                                className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 transition-colors border border-amber-300 flex items-center gap-1 font-bold text-[11px]"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-amber-600" />
+                                <span>A4</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -680,6 +761,44 @@ export default function AdminDashboard({
                 </div>
               )}
             </div>
+          )}
+
+          {/* TAB: Raw Materials & Recipes */}
+          {activeTab === 'raw_materials' && (
+            <RawMaterialsManager
+              rawMaterials={rawMaterials}
+              onUpdateRawMaterial={onUpdateRawMaterial}
+              onAddRawMaterial={onAddRawMaterial}
+              onDeleteRawMaterial={onDeleteRawMaterial}
+              recipes={recipes}
+              onUpdateRecipe={onUpdateRecipe}
+              products={products}
+              lang={lang}
+            />
+          )}
+
+          {/* TAB: Expenses & Net Profit */}
+          {activeTab === 'expenses' && (
+            <ExpensesManager
+              expenses={expenses}
+              onAddExpense={onAddExpense}
+              onDeleteExpense={onDeleteExpense}
+              invoices={invoices}
+              orders={orders}
+              lang={lang}
+            />
+          )}
+
+          {/* TAB: Spoilage & Waste */}
+          {activeTab === 'waste' && (
+            <WasteManager
+              wasteLogs={wasteLogs}
+              onLogWaste={onLogWaste}
+              onDeleteWasteLog={onDeleteWasteLog}
+              rawMaterials={rawMaterials}
+              products={products}
+              lang={lang}
+            />
           )}
 
           {/* TAB 5: Wholesale Merchants */}
@@ -1147,25 +1266,6 @@ export default function AdminDashboard({
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="px-4 sm:px-8 py-3 bg-stone-900 border-t border-stone-800 text-stone-400 text-xs flex justify-between items-center shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span className="text-stone-300 font-medium">
-            {lang === 'en' ? 'Bonne Appetit ERP System Active' : 'نظام إدارة بونابيتي نشط'}
-          </span>
-          <span className="hidden sm:inline text-stone-500">
-            • {lang === 'en' ? 'Admin Phone: ' : 'هاتف الإدارة: '}{BUSINESS_INFO.phoneDisplay}
-          </span>
-        </div>
-        <button
-          onClick={onClose}
-          className="bg-stone-800 hover:bg-stone-700 text-stone-200 px-4 py-1.5 rounded-xl font-bold text-xs transition-colors border border-stone-700 shadow-xs"
-        >
-          {t.adminBackToStore} 🏪
-        </button>
-      </footer>
-
       {/* Invoice View Modal */}
       {selectedInvoiceForView && (
         <InvoiceViewModal
@@ -1174,6 +1274,16 @@ export default function AdminDashboard({
           onClose={() => setSelectedInvoiceForView(null)}
           lang={lang}
           t={t}
+        />
+      )}
+
+      {/* Official A4 Quotation & Order Confirmation Modal */}
+      {selectedDocForA4Quotation && (
+        <A4QuotationModal
+          documentData={selectedDocForA4Quotation}
+          isOpen={!!selectedDocForA4Quotation}
+          onClose={() => setSelectedDocForA4Quotation(null)}
+          lang={lang}
         />
       )}
     </div>

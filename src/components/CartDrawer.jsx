@@ -57,11 +57,11 @@ export default function CartDrawer({
         onClick={onClose}
       />
 
-      <div className={`fixed inset-y-0 ${lang === 'ar' ? 'right-0 pl-10' : 'right-0 pr-10'} max-w-full flex`}>
-        <div className="w-screen max-w-md bg-white shadow-xl flex flex-col">
+      <div className={`fixed inset-y-0 ${lang === 'ar' ? 'right-0 sm:pl-10' : 'left-0 sm:pr-10'} max-w-full flex w-full justify-end`}>
+        <div className="w-full sm:max-w-md bg-white shadow-2xl flex flex-col h-full">
           
           {/* Drawer Header */}
-          <div className="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
+          <div className="p-4 border-b border-stone-200 flex items-center justify-between bg-stone-50 shrink-0">
             <div className="flex items-center gap-2">
               <h2 className="text-base font-black text-stone-900">{t.cartTitle}</h2>
               <span className="text-xs font-bold bg-stone-200 text-stone-700 px-2 py-0.5 rounded-full font-mono">
@@ -71,7 +71,8 @@ export default function CartDrawer({
 
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-200 transition-colors"
+              className="w-8 h-8 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-200 flex items-center justify-center transition-colors active:scale-95"
+              aria-label="إغلاق"
             >
               <X className="w-5 h-5" />
             </button>
@@ -113,27 +114,32 @@ export default function CartDrawer({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* Qty controls */}
-                    <div className="flex items-center border border-stone-300 rounded-lg bg-white overflow-hidden text-xs">
+                    {/* Qty controls with comfortable touch targets */}
+                    <div className="flex items-center border border-stone-300 rounded-xl bg-white overflow-hidden text-xs">
                       <button
+                        type="button"
                         onClick={() => onUpdateQty(item.id, item.quantity - 1)}
-                        className="px-2 py-1 hover:bg-stone-100 text-stone-600"
+                        className="w-8 h-8 flex items-center justify-center hover:bg-stone-100 active:bg-stone-200 text-stone-700 transition-colors touch-manipulation"
+                        aria-label="تقليل"
                       >
-                        <Minus className="w-3 h-3" />
+                        <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="px-2 font-bold font-mono">{item.quantity}</span>
+                      <span className="px-2.5 font-bold font-mono text-sm text-stone-900">{item.quantity}</span>
                       <button
+                        type="button"
                         onClick={() => onUpdateQty(item.id, item.quantity + 1)}
-                        className="px-2 py-1 hover:bg-stone-100 text-stone-600"
+                        className="w-8 h-8 flex items-center justify-center hover:bg-stone-100 active:bg-stone-200 text-stone-700 transition-colors touch-manipulation"
+                        aria-label="زيادة"
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
                     {/* Delete Item */}
                     <button
+                      type="button"
                       onClick={() => onRemoveItem(item.id)}
-                      className="p-1 text-stone-400 hover:text-red-600 transition-colors"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-red-600 hover:bg-red-50 active:scale-90 transition-all touch-manipulation"
                       title={lang === 'ar' ? 'حذف الصنف' : 'Remove item'}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -144,9 +150,9 @@ export default function CartDrawer({
             )}
           </div>
 
-          {/* Drawer Footer */}
+          {/* Drawer Footer with Safe Area */}
           {cartItems.length > 0 && (
-            <div className="p-4 border-t border-stone-200 bg-stone-50 space-y-3">
+            <div className="p-4 border-t border-stone-200 bg-stone-50 space-y-3 pb-safe shrink-0">
               
               {/* Shipping Tier Alert */}
               <div className="bg-stone-100 border border-stone-200 p-2.5 rounded-xl text-xs text-stone-700 flex items-center justify-between">
@@ -175,14 +181,16 @@ export default function CartDrawer({
               {/* Action Buttons */}
               <div className="space-y-2">
                 <button
+                  type="button"
                   onClick={onProceedToCheckout}
-                  className="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md"
+                  className="w-full bg-stone-900 hover:bg-stone-800 active:bg-brand-600 text-white font-black py-3.5 sm:py-3 rounded-2xl text-sm sm:text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 touch-manipulation"
                 >
                   <span>{t.proceedToCheckout}</span>
                   <BackIcon className="w-4 h-4" />
                 </button>
 
                 <button
+                  type="button"
                   onClick={onClearCart}
                   className="w-full text-center text-xs text-stone-500 hover:text-red-600 py-1 font-medium transition-colors"
                 >

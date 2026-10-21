@@ -2,10 +2,14 @@ import React, { useState, useMemo } from 'react';
 import { 
   Plus, Search, Edit3, Trash2, Eye, EyeOff, ArrowUp, ArrowDown, 
   Image as ImageIcon, CheckCircle2, AlertCircle, RefreshCw, Sparkles, 
-  DollarSign, Utensils, X, Save, ExternalLink
+  DollarSign, Utensils, X, Save, Check, SlidersHorizontal, ArrowUpDown,
+  Download, FileSpreadsheet
 } from 'lucide-react';
 import { CATEGORIES } from '../../data/products';
 import { UI_TRANSLATIONS, getLocalizedProduct } from '../../data/translations';
+import ProductEditModal from './ProductEditModal';
+import ExcelImportModal from './ExcelImportModal';
+import { exportInventoryToExcel } from '../../utils/excelInventoryHandler';
 
 export default function ProductCatalogManager({
   products = [],
@@ -15,6 +19,9 @@ export default function ProductCatalogManager({
   onDeleteProduct,
   onMoveProduct,
   onResetProducts,
+  inventory = {},
+  onUpdateStock,
+  wholesaleDiscountPct = 15,
   lang = 'ar',
   t
 }) {
@@ -27,112 +34,129 @@ export default function ProductCatalogManager({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null); // null if adding new
 
-  // Form Fields
-  const [formName, setFormName] = useState('');
-  const [formCategory, setFormCategory] = useState('special');
-  const [formPrice, setFormPrice] = useState('');
-  const [formUnit, setFormUnit] = useState('طبق نصف كيلو');
-  const [formWeightKg, setFormWeightKg] = useState('0.5');
-  const [formImage, setFormImage] = useState('');
-  const [formDescription, setFormDescription] = useState('');
-  const [formIsFasting, setFormIsFasting] = useState(false);
-  const [formIsSpecial, setFormIsSpecial] = useState(false);
-  const [formHidden, setFormHidden] = useState(false);
+  // Inline Price Editing State
+  const [inlinePriceId, setInlinePriceId] = useState(null);
+  const [inlinePriceVal, setInlinePriceVal] = useState('');
 
-  const [formError, setFormError] = useState('');
+  // Batch Price Adjust Modal State
+  const [isBatchPriceOpen, setIsBatchPriceOpen] = useState(false);
+  const [batchCategory, setBatchCategory] = useState('all');
+  const [batchActionType, setBatchActionType] = useState('percent'); // 'percent' | 'fixed'
+  const [batchAmount, setBatchAmount] = useState('10'); // +10% or +10 EGP
+  const [batchDirection, setBatchDirection] = useState('increase'); // 'increase' | 'decrease'
+
   const [successToast, setSuccessToast] = useState('');
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+
+  // Handle Export Excel
+  const handleExportExcel = () => {
+    const fileName = exportInventoryToExcel(products, inventory, wholesaleDiscountPct);
+    setSuccessToast(`✓ تم تنزيل شيت الإكسيل بنجاح (${fileName}) 📥`);
+    setTimeout(() => setSuccessToast(''), 4000);
+  };
+
+  // Handle Apply Excel Updates
+  const handleApplyExcelUpdates = (updates) => {
+    let priceChanges = 0;
+    let wholesaleChanges = 0;
+    let newItems = 0;
+
+    updates.forEach((u) => {
+      if (u.isNew && onAddProduct) {
+        onAddProduct(u.product);
+        newItems++;
+      } else if (onUpdateProduct) {
+        onUpdateProduct(u.product);
+      }
+
+      if (u.priceChanged) priceChanges++;
+      if (u.wholesalePriceChanged) wholesaleChanges++;
+
+      if (u.stockChanged && onUpdateStock) {
+        onUpdateStock(u.targetId, u.newStock);
+      }
+    });
+
+    setSuccessToast(`✓ تم تطبيق شيت الإكسيل بنجاح (${priceChanges} تعديل قطاعي، ${wholesaleChanges} تعديل تجار${newItems > 0 ? `، ${newItems} أصناف جديدة` : ''})!`);
+    setTimeout(() => setSuccessToast(''), 5000);
+  };
 
   // Open modal for editing
   const handleOpenEdit = (product) => {
     setEditingProduct(product);
-    setFormName(product.name || '');
-    setFormCategory(product.category || 'special');
-    setFormPrice(String(product.price || ''));
-    setFormUnit(product.unit || 'طبق نصف كيلو');
-    setFormWeightKg(String(product.weightKg || '0.5'));
-    setFormImage(product.image || '');
-    setFormDescription(product.description || '');
-    setFormIsFasting(!!product.isFasting);
-    setFormIsSpecial(!!product.isSpecial);
-    setFormHidden(!!product.hidden);
-    setFormError('');
     setIsModalOpen(true);
   };
 
   // Open modal for adding new
   const handleOpenCreate = () => {
     setEditingProduct(null);
-    setFormName('');
-    setFormCategory('special');
-    setFormPrice('');
-    setFormUnit('طبق نصف كيلو');
-    setFormWeightKg('0.5');
-    setFormImage('');
-    setFormDescription('');
-    setFormIsFasting(false);
-    setFormIsSpecial(false);
-    setFormHidden(false);
-    setFormError('');
     setIsModalOpen(true);
   };
 
-  // Submit Edit or Create
-  const handleSaveProduct = (e) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (!formName.trim()) {
-      setFormError('برجاء كتابة اسم الصنف');
-      return;
-    }
-
-    const priceNum = parseFloat(formPrice);
-    if (isNaN(priceNum) || priceNum <= 0) {
-      setFormError('برجاء كتابة سعر صحيح أكبر من الصفر');
-      return;
-    }
-
-    const weightNum = parseFloat(formWeightKg) || 0.5;
-
+  // Save product from modal
+  const handleSaveModal = (productData, stockQty) => {
     if (editingProduct) {
-      // Update existing
-      const updated = {
-        ...editingProduct,
-        name: formName.trim(),
-        category: formCategory,
-        price: priceNum,
-        unit: formUnit.trim(),
-        weightKg: weightNum,
-        image: formImage.trim(),
-        description: formDescription.trim(),
-        isFasting: formIsFasting,
-        isSpecial: formIsSpecial,
-        hidden: formHidden
-      };
-
-      onUpdateProduct(updated);
-      setSuccessToast(`تم تحديث الصنف "${updated.name}" بنجاح!`);
+      onUpdateProduct(productData);
+      if (onUpdateStock && productData.id) {
+        onUpdateStock(productData.id, stockQty);
+      }
+      setSuccessToast(lang === 'en' ? `Updated "${productData.name}" successfully!` : `تم حفظ وتحديث بيانات الصنف "${productData.name}" بنجاح!`);
     } else {
-      // Add new
-      const newProd = {
-        id: 'prod_' + Date.now(),
-        name: formName.trim(),
-        category: formCategory,
-        price: priceNum,
-        unit: formUnit.trim() || 'طبق جاهز للتسوية',
-        weightKg: weightNum,
-        image: formImage.trim(),
-        description: formDescription.trim(),
-        isFasting: formIsFasting,
-        isSpecial: formIsSpecial,
-        hidden: formHidden
-      };
+      onAddProduct(productData);
+      if (onUpdateStock && productData.id) {
+        onUpdateStock(productData.id, stockQty);
+      }
+      setSuccessToast(lang === 'en' ? `Added "${productData.name}" to menu successfully!` : `تمت إضافة الصنف الجديد "${productData.name}" للمنيو بنجاح!`);
+    }
+    setTimeout(() => setSuccessToast(''), 4000);
+  };
 
-      onAddProduct(newProd);
-      setSuccessToast(`تمت إضافة الصنف الجديد "${newProd.name}" للمنيو بنجاح!`);
+  // Quick inline price saving
+  const handleStartInlinePrice = (product) => {
+    setInlinePriceId(product.id);
+    setInlinePriceVal(String(product.price));
+  };
+
+  const handleSaveInlinePrice = (product) => {
+    const newPrice = parseFloat(inlinePriceVal);
+    if (!isNaN(newPrice) && newPrice > 0) {
+      onUpdateProduct({ ...product, price: newPrice });
+      setSuccessToast(lang === 'en' ? `Price updated to ${newPrice} EGP` : `تم تحديث سعر "${product.name}" إلى ${newPrice} ج.م`);
+      setTimeout(() => setSuccessToast(''), 3000);
+    }
+    setInlinePriceId(null);
+  };
+
+  // Batch Price Update handler
+  const handleApplyBatchPrices = (e) => {
+    e.preventDefault();
+    const val = parseFloat(batchAmount);
+    if (isNaN(val) || val <= 0) {
+      alert('برجاء كتابة قيمة صحيحة أكبر من الصفر');
+      return;
     }
 
-    setIsModalOpen(false);
+    let affectedCount = 0;
+    products.forEach((p) => {
+      if (batchCategory === 'all' || p.category === batchCategory) {
+        let newPrice = p.price;
+        if (batchActionType === 'percent') {
+          const factor = batchDirection === 'increase' ? (1 + val / 100) : (1 - val / 100);
+          newPrice = Math.max(5, Math.round(p.price * factor));
+        } else {
+          const diff = batchDirection === 'increase' ? val : -val;
+          newPrice = Math.max(5, Math.round(p.price + diff));
+        }
+
+        if (newPrice !== p.price) {
+          onUpdateProduct({ ...p, price: newPrice });
+          affectedCount++;
+        }
+      }
+    });
+
+    setIsBatchPriceOpen(false);
+    setSuccessToast(lang === 'en' ? `Updated prices of ${affectedCount} dishes successfully!` : `تم تحديث أسعار ${affectedCount} صنف في المنيو بنجاح!`);
     setTimeout(() => setSuccessToast(''), 4000);
   };
 
@@ -166,27 +190,63 @@ export default function ProductCatalogManager({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-brand-400 bg-stone-800 px-3 py-1 rounded-full border border-stone-700">
-              {lang === 'en' ? 'Product Catalog & Menu' : 'كتالوج المنتجات والمنيو'}
+              {lang === 'en' ? 'Product Catalog & Pricing' : 'المنيو والأسعار والصور'}
             </span>
-            <span className="text-xs text-stone-400">{lang === 'en' ? 'Full Control' : 'تحكم كامل شامل'}</span>
+            <span className="text-xs text-emerald-400 font-bold bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800">
+              {lang === 'en' ? 'Full Control Live' : 'تحكم شامل فوري ✓'}
+            </span>
           </div>
           <h2 className="text-xl font-black mt-1">
             {activeT.catalog_title}
           </h2>
           <p className="text-xs text-stone-400 mt-1">
-            {activeT.catalog_desc}
+            {lang === 'en' 
+              ? 'Complete control over dish names, selling prices, food photos, descriptions, categories, and inventory.' 
+              : 'تحكم كامل وشامل في أسماء الأصناف، أسعار البيع، رفع وتغيير الصور، الأوزان، الوصف وإخفاء أو إظهار المنتجات.'}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Add Dish Button */}
           <button
             onClick={handleOpenCreate}
-            className="flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-black rounded-xl text-xs transition-all shadow-md"
+            className="flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-black rounded-xl text-xs transition-all shadow-md active:scale-95"
           >
             <Plus className="w-4 h-4" />
             <span>{activeT.catalog_addDish} ➕</span>
           </button>
 
+          {/* Batch Price Update Button */}
+          <button
+            onClick={() => setIsBatchPriceOpen(true)}
+            title="تعديل أسعار جماعي لجميع الأصناف أو قسم معين بنسبة مئوية أو مبلغ ثابت"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl text-xs font-bold transition-colors border border-amber-500/40"
+          >
+            <ArrowUpDown className="w-3.5 h-3.5 text-amber-400" />
+            <span>{lang === 'en' ? 'Batch Prices' : 'تعديل أسعار جماعي ⚡'}</span>
+          </button>
+
+          {/* Excel Export */}
+          <button
+            onClick={handleExportExcel}
+            title="تصدير جميع الأصناف والأسعار والمخزون في شيت إكسيل"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-700/40 hover:bg-emerald-700/60 text-emerald-200 rounded-xl text-xs font-bold transition-colors border border-emerald-500/40"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-300" />
+            <span>تصدير إكسيل 📥</span>
+          </button>
+
+          {/* Excel Import */}
+          <button
+            onClick={() => setIsExcelModalOpen(true)}
+            title="رفع شيت إكسيل بعد تعديل الأسعار أو الرصيد وتطبيقه فوراً"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black transition-colors shadow-xs"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>استيراد وتحديث إكسيل 📤</span>
+          </button>
+
+          {/* Reset Menu */}
           <button
             onClick={() => {
               if (window.confirm(lang === 'en' ? 'Are you sure you want to restore the default Bonne Appetit menu?' : 'هل أنت متأكد من استعادة منيو بونابيتي الافتراضي الأصلي بالكامل؟')) {
@@ -233,9 +293,12 @@ export default function ProductCatalogManager({
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
-          <span className="text-stone-500 font-medium block mb-1">{lang === 'en' ? 'Active Categories' : 'الأقسام النشطة'}</span>
-          <span className="text-2xl font-black text-brand-600 font-mono">5</span>
-          <span className="text-[11px] text-stone-400 block mt-0.5">{lang === 'en' ? 'Special, Fish, Poultry, Beef, Vegan' : 'سبشيال، سمك، دواجن، لحوم، نباتي'}</span>
+          <span className="text-stone-500 font-medium block mb-1">{lang === 'en' ? 'Fast Price Edit' : 'تعديل السعر السريع'}</span>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-stone-800 font-bold text-xs">{lang === 'en' ? 'Click on price to edit' : 'اضغط على السعر في الجدول'}</span>
+          </div>
+          <span className="text-[11px] text-stone-400 block mt-0.5">{lang === 'en' ? 'Instant inline update' : 'تعديل وحفظ فوري بدون نوافذ'}</span>
         </div>
       </div>
 
@@ -338,9 +401,15 @@ export default function ProductCatalogManager({
                 <th className="p-3">{activeT.catalog_thDish || (lang === 'en' ? 'Dish Name' : 'اسم الصنف')}</th>
                 <th className="p-3">{activeT.catalog_thCategory || (lang === 'en' ? 'Category' : 'القسم')}</th>
                 <th className="p-3">{activeT.catalog_thUnit || (lang === 'en' ? 'Unit & Weight' : 'الوحدة والوزن')}</th>
-                <th className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'}`}>{activeT.catalog_thPrice || (lang === 'en' ? 'Price' : 'السعر')}</th>
+                <th className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'}`}>
+                  <div className="flex flex-col">
+                    <span className="font-black">{lang === 'en' ? 'Prices (Retail / Wholesale)' : 'الأسعار (قطاعي / تجار)'}</span>
+                    <span className="text-[10px] text-stone-400 font-normal">سعر الزبون • سعر التاجر</span>
+                  </div>
+                </th>
+                <th className="p-3 text-center">{lang === 'en' ? 'Stock' : 'الرصيد'}</th>
                 <th className="p-3 text-center">{activeT.catalog_thVisibility || (lang === 'en' ? 'Visibility' : 'حالة الظهور')}</th>
-                <th className="p-3 text-center">{lang === 'en' ? 'Actions' : 'إجراءات'}</th>
+                <th className="p-3 text-center">{lang === 'en' ? 'Full Edit' : 'تحكم شامل'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
@@ -348,6 +417,7 @@ export default function ProductCatalogManager({
                 const isFirst = index === 0;
                 const isLast = index === products.length - 1;
                 const localizedP = getLocalizedProduct(product, lang);
+                const currentStock = inventory[product.id] ?? 0;
 
                 return (
                   <tr 
@@ -379,9 +449,14 @@ export default function ProductCatalogManager({
                       </div>
                     </td>
 
-                    {/* Image Thumbnail */}
+                    {/* Image Thumbnail with Click-to-edit */}
                     <td className="p-3">
-                      <div className="w-12 h-12 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(product)}
+                        className="w-12 h-12 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0 hover:ring-2 hover:ring-brand-400 transition-all relative group"
+                        title={lang === 'en' ? 'Click to change photo' : 'اضغط لتغيير أو رفع صورة للصنف'}
+                      >
                         {product.image ? (
                           <img
                             src={product.image}
@@ -394,14 +469,23 @@ export default function ProductCatalogManager({
                         ) : (
                           <ImageIcon className="w-5 h-5 text-stone-300" />
                         )}
-                      </div>
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </div>
+                      </button>
                     </td>
 
                     {/* Product Name & Badges */}
                     <td className="p-3 max-w-xs">
-                      <span className={`font-black text-sm block ${product.hidden ? 'text-stone-500 line-through' : 'text-stone-900'}`}>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(product)}
+                        className={`text-start font-black text-sm block hover:text-brand-600 transition-colors ${
+                          product.hidden ? 'text-stone-500 line-through' : 'text-stone-900'
+                        }`}
+                      >
                         {localizedP.name}
-                      </span>
+                      </button>
                       <p className="text-[11px] text-stone-500 line-clamp-1 mt-0.5">
                         {localizedP.description || (lang === 'en' ? 'Ready to cook immediately' : 'جاهز للتسوية الفورية')}
                       </p>
@@ -421,7 +505,7 @@ export default function ProductCatalogManager({
 
                     {/* Category */}
                     <td className="p-3">
-                      <span className="text-[11px] font-bold text-stone-700 bg-stone-100 px-2.5 py-1 rounded-full">
+                      <span className="text-[11px] font-bold text-stone-700 bg-stone-100 px-2.5 py-1 rounded-full whitespace-nowrap">
                         {CATEGORIES.find((c) => c.id === product.category)?.name || product.category}
                       </span>
                     </td>
@@ -434,9 +518,76 @@ export default function ProductCatalogManager({
                       </span>
                     </td>
 
-                    {/* Price */}
-                    <td className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'} font-mono font-black text-sm text-stone-900`}>
-                      {product.price} {activeT.currency}
+                    {/* Dual Prices: Retail & Wholesale */}
+                    <td className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'}`}>
+                      {inlinePriceId === product.id ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <input
+                            type="number"
+                            autoFocus
+                            value={inlinePriceVal}
+                            onChange={(e) => setInlinePriceVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveInlinePrice(product);
+                              if (e.key === 'Escape') setInlinePriceId(null);
+                            }}
+                            className="w-20 p-1 text-xs font-mono font-bold border border-brand-500 rounded-lg bg-white shadow-inner focus:outline-hidden"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveInlinePrice(product)}
+                            className="p-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                            title="حفظ السعر"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setInlinePriceId(null)}
+                            className="p-1 rounded-lg bg-stone-200 text-stone-600 hover:bg-stone-300 transition-colors"
+                            title="إلغاء"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {/* Retail Price */}
+                          <div
+                            onClick={() => handleStartInlinePrice(product)}
+                            className="flex items-center gap-1.5 font-mono font-black text-xs sm:text-sm text-stone-900 hover:text-brand-600 cursor-pointer p-0.5 rounded transition-all group"
+                            title={lang === 'en' ? 'Click to quick edit price' : 'اضغط لتعديل السعر العادي مباشرة'}
+                          >
+                            <span className="text-[10px] text-stone-500 font-sans font-bold">قطاعي:</span>
+                            <span>{product.price} {activeT.currency}</span>
+                            <Edit3 className="w-2.5 h-2.5 text-stone-400 group-hover:text-brand-600 opacity-40 group-hover:opacity-100 transition-opacity" />
+                          </div>
+
+                          {/* Wholesale Price */}
+                          <div
+                            onClick={() => handleOpenEdit(product)}
+                            className="flex items-center gap-1 font-mono font-black text-[11px] text-amber-800 hover:text-amber-950 cursor-pointer p-0.5 rounded transition-all"
+                            title="اضغط لتعديل سعر التجار في شاشة التحكم"
+                          >
+                            <span className="text-[10px] text-amber-700 font-sans font-bold">تجار:</span>
+                            <span className="bg-amber-100 text-amber-900 px-1 rounded border border-amber-200">
+                              {product.wholesalePrice !== undefined && product.wholesalePrice !== null && Number(product.wholesalePrice) > 0
+                                ? Number(product.wholesalePrice)
+                                : Math.round(product.price * (1 - (wholesaleDiscountPct || 15) / 100))} {activeT.currency}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Current Stock */}
+                    <td className="p-3 text-center">
+                      <span className={`font-mono font-bold px-2 py-0.5 rounded-lg text-xs ${
+                        currentStock === 0 ? 'bg-red-100 text-red-700' :
+                        currentStock <= 5 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {currentStock}
+                      </span>
                     </td>
 
                     {/* Visibility Toggle */}
@@ -464,15 +615,16 @@ export default function ProductCatalogManager({
                       </button>
                     </td>
 
-                    {/* Actions: Edit & Delete */}
+                    {/* Actions: Comprehensive Edit & Delete */}
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleOpenEdit(product)}
-                          title={lang === 'en' ? 'Edit Dish' : 'تعديل بيانات الصنف والصورة والسعر'}
-                          className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
+                          title={lang === 'en' ? 'Edit all dish details' : 'تعديل شامل (الاسم، السعر، الصورة، الوصف)'}
+                          className="px-2.5 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-800 border border-brand-200 font-bold flex items-center gap-1 transition-all"
                         >
-                          <Edit3 className="w-3.5 h-3.5" />
+                          <Edit3 className="w-3.5 h-3.5 text-brand-600" />
+                          <span>{lang === 'en' ? 'Edit' : 'تعديل'}</span>
                         </button>
 
                         <button
@@ -484,7 +636,7 @@ export default function ProductCatalogManager({
                             }
                           }}
                           title={lang === 'en' ? 'Delete Dish' : 'حذف الصنف نهائياً'}
-                          className="p-1.5 rounded-lg bg-stone-100 hover:bg-red-50 text-stone-400 hover:text-red-500 transition-colors"
+                          className="p-1.5 rounded-xl bg-stone-100 hover:bg-red-50 text-stone-400 hover:text-red-500 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -499,230 +651,136 @@ export default function ProductCatalogManager({
         </div>
       </div>
 
-      {/* EDIT / CREATE PRODUCT MODAL */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+      {/* FULL PRODUCT EDIT / CREATE MODAL */}
+      <ProductEditModal
+        product={editingProduct}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveModal}
+        currentStock={editingProduct ? (inventory[editingProduct.id] ?? 20) : 20}
+        wholesaleDiscountPct={wholesaleDiscountPct}
+        lang={lang}
+      />
+
+      {/* BATCH PRICE ADJUSTMENT MODAL */}
+      {isBatchPriceOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div 
-            className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-stone-200 relative my-6 text-xs max-h-[92vh] overflow-y-auto"
+            className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 text-xs"
+            dir={lang === 'ar' ? 'rtl' : 'ltr'}
             onClick={(e) => e.stopPropagation()}
           >
-            
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-stone-200 mb-4">
-              <div>
-                <span className="text-[11px] font-bold text-brand-600 uppercase tracking-widest block">
-                  {editingProduct ? (lang === 'en' ? 'Edit Dish Details' : 'تعديل بيانات الصنف') : (lang === 'en' ? 'Add New Dish' : 'إضافة صنف جديد')}
-                </span>
-                <h3 className="text-base font-black text-stone-900 mt-0.5">
-                  {editingProduct ? editingProduct.name : (lang === 'en' ? 'Add New Meal to Menu' : 'إضافة وجبة / أكلة جديدة للمنيو')}
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 mb-4">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="w-5 h-5 text-amber-600" />
+                <h3 className="font-black text-sm text-stone-900">
+                  {lang === 'en' ? 'Batch Price Adjustment' : 'تعديل أسعار جماعي للمنيو ⚡'}
                 </h3>
               </div>
-
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors"
+                onClick={() => setIsBatchPriceOpen(false)}
+                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {formError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl font-bold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{formError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSaveProduct} className="space-y-4">
-              
-              {/* Product Name */}
+            <form onSubmit={handleApplyBatchPrices} className="space-y-4">
               <div>
                 <label className="font-bold text-stone-700 block mb-1">
-                  {lang === 'en' ? 'Dish Full Name' : 'اسم الصنف الكامل'} <span className="text-red-500">*</span>:
+                  {lang === 'en' ? 'Target Section / Category' : 'الأصناف المستهدفة'}:
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder={lang === 'en' ? 'e.g. Fish Fillet Kofta, Stuffed Vine Leaves...' : 'مثال: كفتة سمك فيليه أو محشي ورق عنب...'}
-                  className="w-full p-2.5 rounded-xl border border-stone-300 font-bold focus:outline-hidden focus:border-brand-500"
-                />
+                <select
+                  value={batchCategory}
+                  onChange={(e) => setBatchCategory(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-stone-300 font-bold bg-white"
+                >
+                  <option value="all">جميع أصناف المنيو بلا استثناء ({products.length} صنف)</option>
+                  <option value="special">قسم السبشيال (SPECIAL) فقط</option>
+                  <option value="fish">قسم الأسماك والبحريات (FISH) فقط</option>
+                  <option value="poultry">قسم الفراخ والدواجن (CHICKEN) فقط</option>
+                  <option value="beef">قسم اللحوم البلدي (BEEF) فقط</option>
+                  <option value="vegetables">قسم الخضار والمحاشي (VEGAN) فقط</option>
+                </select>
               </div>
 
-              {/* Category & Price */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Category / Section:' : 'القسم / التصنيف:'}</label>
+                  <label className="font-bold text-stone-700 block mb-1">
+                    {lang === 'en' ? 'Adjustment Direction' : 'نوع التعديل'}:
+                  </label>
                   <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium focus:outline-hidden focus:border-brand-500"
+                    value={batchDirection}
+                    onChange={(e) => setBatchDirection(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 font-bold bg-white"
                   >
-                    <option value="special">{lang === 'en' ? 'Special 🌟' : 'سبشيال (SPECIAL) 🌟'}</option>
-                    <option value="fish">{lang === 'en' ? 'Fish & Seafood 🐟' : 'سمك وبحريات (FISH) 🐟'}</option>
-                    <option value="poultry">{lang === 'en' ? 'Chicken & Poultry 🍗' : 'فراخ ودواجن (CHICKEN) 🍗'}</option>
-                    <option value="beef">{lang === 'en' ? 'Beef & Meat 🥩' : 'لحمة متبلة (BEEF) 🥩'}</option>
-                    <option value="vegetables">{lang === 'en' ? 'Vegan & Veg 🌱' : 'خضار ونباتي (VEGAN) 🌱'}</option>
+                    <option value="increase">زيادة في الأسعار 📈</option>
+                    <option value="decrease">تخفيض في الأسعار 📉</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="font-bold text-stone-700 block mb-1">
-                    {lang === 'en' ? 'Retail Price' : 'السعر الرسمي بالجنيه'} <span className="text-red-500">*</span>:
+                    {lang === 'en' ? 'Calculation Method' : 'طريقة الحساب'}:
                   </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      required
-                      value={formPrice}
-                      onChange={(e) => setFormPrice(e.target.value)}
-                      placeholder="150"
-                      className="w-full p-2.5 pr-10 rounded-xl border border-stone-300 font-mono font-bold focus:outline-hidden focus:border-brand-500"
-                    />
-                    <span className={`absolute ${lang === 'ar' ? 'right-2.5' : 'right-2.5'} top-2.5 font-bold text-stone-400`}>{activeT.currency}</span>
-                  </div>
+                  <select
+                    value={batchActionType}
+                    onChange={(e) => setBatchActionType(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-stone-300 font-bold bg-white"
+                  >
+                    <option value="percent">نسبة مئوية (%)</option>
+                    <option value="fixed">مبلغ ثابت بالجنيه (ج.م)</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Unit & Weight */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Unit & Portion:' : 'الوحدة والبيان:'}</label>
-                  <input
-                    type="text"
-                    value={formUnit}
-                    onChange={(e) => setFormUnit(e.target.value)}
-                    placeholder={lang === 'en' ? 'e.g. 500g Tray, Ready to cook 1kg...' : 'مثال: طبق نصف كيلو مصبع، كيلو جاهز...'}
-                    className="w-full p-2.5 rounded-xl border border-stone-300 focus:outline-hidden focus:border-brand-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Estimated Weight (kg):' : 'الوزن التقديري (كجم):'}</label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    min="0.1"
-                    value={formWeightKg}
-                    onChange={(e) => setFormWeightKg(e.target.value)}
-                    placeholder="0.5"
-                    className="w-full p-2.5 rounded-xl border border-stone-300 font-mono focus:outline-hidden focus:border-brand-500"
-                  />
-                </div>
-              </div>
-
-              {/* Image URL & Live Preview */}
               <div>
                 <label className="font-bold text-stone-700 block mb-1">
-                  {lang === 'en' ? 'Image URL:' : 'رابط صورة المنتج (Image URL):'}
+                  {lang === 'en' ? 'Value' : 'القيمة'} ({batchActionType === 'percent' ? '%' : 'جنيه'}):
                 </label>
                 <input
-                  type="url"
-                  value={formImage}
-                  onChange={(e) => setFormImage(e.target.value)}
-                  placeholder={lang === 'en' ? 'https://example.com/photo.jpg or path' : 'https://example.com/photo.jpg أو مسار الصورة'}
-                  className="w-full p-2.5 rounded-xl border border-stone-300 font-mono text-[11px] focus:outline-hidden focus:border-brand-500"
-                  dir="ltr"
-                />
-
-                {/* Live Image Preview */}
-                {formImage && (
-                  <div className="mt-2 p-2 bg-stone-50 rounded-xl border border-stone-200 flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-lg bg-stone-200 overflow-hidden shrink-0">
-                      <img
-                        src={formImage}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                    <div className="text-[11px] text-stone-500">
-                      <span className="font-bold text-stone-800 block">{lang === 'en' ? 'Live Image Preview' : 'معاينة الصورة المباشرة'}</span>
-                      <span>{lang === 'en' ? 'Check if picture appears properly.' : 'تأكد من ظهور الصورة بشكل صحيح في المربع.'}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Description & Ingredients:' : 'الوصف والمكونات:'}</label>
-                <textarea
-                  rows="3"
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder={lang === 'en' ? 'Write an appetizing description with ingredients and cooking tips...' : 'اكتب وصفاً جذاباً للوجبة يوضح المكونات وطريقة التسوية والتتبيل...'}
-                  className="w-full p-2.5 rounded-xl border border-stone-300 focus:outline-hidden focus:border-brand-500"
+                  type="number"
+                  min="1"
+                  step="1"
+                  required
+                  value={batchAmount}
+                  onChange={(e) => setBatchAmount(e.target.value)}
+                  placeholder="10"
+                  className="w-full p-2.5 rounded-xl border border-stone-300 font-mono font-bold"
                 />
               </div>
 
-              {/* Badges / Options */}
-              <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200 space-y-2">
-                <span className="font-bold text-stone-700 block mb-1">{lang === 'en' ? 'Additional Dish Options:' : 'خيارات إضافية للمنتج:'}</span>
-                
-                <div className="flex flex-wrap items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer font-bold text-stone-700">
-                    <input
-                      type="checkbox"
-                      checked={formIsFasting}
-                      onChange={(e) => setFormIsFasting(e.target.checked)}
-                      className="rounded text-brand-600 focus:ring-brand-500"
-                    />
-                    <span>{lang === 'en' ? '100% Vegan / Fasting 🌱' : 'أكل صيامي / نباتي 100% 🌱'}</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer font-bold text-stone-700">
-                    <input
-                      type="checkbox"
-                      checked={formIsSpecial}
-                      onChange={(e) => setFormIsSpecial(e.target.checked)}
-                      className="rounded text-brand-600 focus:ring-brand-500"
-                    />
-                    <span>{lang === 'en' ? 'Special / Limited Time 🔥' : 'سبشيال لفترة محدودة 🔥'}</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer font-bold text-amber-800">
-                    <input
-                      type="checkbox"
-                      checked={formHidden}
-                      onChange={(e) => setFormHidden(e.target.checked)}
-                      className="rounded text-amber-600 focus:ring-amber-500"
-                    />
-                    <span>{lang === 'en' ? 'Hide item from store 👁️‍🗨️' : 'إخفاء المنتج حالياً من المتجر 👁️‍🗨️'}</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Buttons */}
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-stone-200 text-stone-600 font-bold hover:bg-stone-100"
+                  onClick={() => setIsBatchPriceOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-stone-300 text-stone-600 font-bold"
                 >
                   {lang === 'en' ? 'Cancel' : 'إلغاء'}
                 </button>
-
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl transition-all shadow-md flex items-center gap-1.5"
+                  className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black rounded-xl shadow-md transition-all"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{editingProduct ? (lang === 'en' ? 'Save Changes' : 'حفظ تعديلات الصنف') : (lang === 'en' ? 'Add Dish to Menu' : 'إضافة الصنف للمنيو')}</span>
+                  {lang === 'en' ? 'Apply to All' : 'تطبيق التعديل على الأسعار ⚡'}
                 </button>
               </div>
-
             </form>
-
           </div>
         </div>
       )}
+
+      {/* EXCEL IMPORT / UPLOAD MODAL */}
+      <ExcelImportModal
+        isOpen={isExcelModalOpen}
+        onClose={() => setIsExcelModalOpen(false)}
+        products={products}
+        inventory={inventory}
+        onApplyExcelUpdates={handleApplyExcelUpdates}
+        wholesaleDiscountPct={wholesaleDiscountPct}
+        lang={lang}
+      />
 
     </div>
   );

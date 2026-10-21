@@ -8,8 +8,16 @@ import AuthModal from './components/AuthModal';
 import AdminDashboard from './components/AdminDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import Footer from './components/Footer';
+import MobileBottomBar from './components/MobileBottomBar';
 import { PRODUCTS, BUSINESS_INFO } from './data/products';
-import { DEFAULT_WORKERS, getInitialInventory } from './data/adminDefaults';
+import { 
+  DEFAULT_WORKERS, 
+  getInitialInventory, 
+  DEFAULT_RAW_MATERIALS, 
+  DEFAULT_RECIPES, 
+  DEFAULT_EXPENSES, 
+  DEFAULT_WASTE_LOGS 
+} from './data/adminDefaults';
 import { UI_TRANSLATIONS, getLocalizedProduct } from './data/translations';
 import { MessageCircle, Phone, Filter, Bell, Volume2, X } from 'lucide-react';
 import { playLoudOrderAlert, sendDesktopNotification, requestDesktopNotificationPermission } from './utils/orderNotifier';
@@ -126,6 +134,46 @@ export default function App() {
     }
   });
 
+  // Raw materials inventory (مخزن المواد الخام)
+  const [rawMaterials, setRawMaterials] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_raw_materials_v1');
+      return saved ? JSON.parse(saved) : DEFAULT_RAW_MATERIALS;
+    } catch (e) {
+      return DEFAULT_RAW_MATERIALS;
+    }
+  });
+
+  // Dish Recipes / Formulas (كتابة خلطات كل صنف)
+  const [recipes, setRecipes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_recipes_v1');
+      return saved ? JSON.parse(saved) : DEFAULT_RECIPES;
+    } catch (e) {
+      return DEFAULT_RECIPES;
+    }
+  });
+
+  // Operating Expenses (المصاريف الإدارية والتشغيلية)
+  const [expenses, setExpenses] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_expenses_v1');
+      return saved ? JSON.parse(saved) : DEFAULT_EXPENSES;
+    } catch (e) {
+      return DEFAULT_EXPENSES;
+    }
+  });
+
+  // Waste and Spoilage Logs (سجل الهالك والتوالف)
+  const [wasteLogs, setWasteLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bonne_appetit_waste_logs_v1');
+      return saved ? JSON.parse(saved) : DEFAULT_WASTE_LOGS;
+    } catch (e) {
+      return DEFAULT_WASTE_LOGS;
+    }
+  });
+
   // Dynamic Products Catalog state (full admin control: add, edit, reorder, hide)
   const [products, setProducts] = useState(() => {
     try {
@@ -133,16 +181,19 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         return parsed.map((p) => {
-          if (p.id === 'v1' || (p.name && p.name.includes('ورق عنب نباتي'))) {
-            return {
-              ...p,
-              name: 'ورق عنب بالأرز',
-              description: p.description?.includes('ورق عنب نباتي')
-                ? 'ورق عنب بناتي ناعم محشو بالأرز المصري المبهر بزيت الزيتون والليمون ودبس الرمان وخضار نضرة.'
-                : p.description
-            };
+          let updated = {
+            ...p,
+            wholesalePrice: (p.wholesalePrice !== undefined && p.wholesalePrice !== null && Number(p.wholesalePrice) > 0)
+              ? Number(p.wholesalePrice)
+              : Math.round(Number(p.price || 0) * 0.85)
+          };
+          if (updated.id === 'v1' || (updated.name && updated.name.includes('ورق عنب نباتي'))) {
+            updated.name = 'ورق عنب بالأرز';
+            if (updated.description?.includes('ورق عنب نباتي')) {
+              updated.description = 'ورق عنب بناتي ناعم محشو بالأرز المصري المبهر بزيت الزيتون والليمون ودبس الرمان وخضار نضرة.';
+            }
           }
-          return p;
+          return updated;
         });
       }
       return PRODUCTS;
@@ -297,6 +348,30 @@ export default function App() {
 
   useEffect(() => {
     try {
+      localStorage.setItem('bonne_appetit_raw_materials_v1', JSON.stringify(rawMaterials));
+    } catch (e) {}
+  }, [rawMaterials]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_recipes_v1', JSON.stringify(recipes));
+    } catch (e) {}
+  }, [recipes]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_expenses_v1', JSON.stringify(expenses));
+    } catch (e) {}
+  }, [expenses]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bonne_appetit_waste_logs_v1', JSON.stringify(wasteLogs));
+    } catch (e) {}
+  }, [wasteLogs]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem('bonne_appetit_products_v2', JSON.stringify(products));
     } catch (e) {}
   }, [products]);
@@ -394,12 +469,12 @@ export default function App() {
     setWorkers((prev) => prev.filter((w) => w.id !== workerId));
   };
 
-  // Production Handlers - AUTOMATICALLY ADDS TO INVENTORY
+  // Production Handlers - AUTOMATICALLY ADDS TO INVENTORY & DEDUCTS RAW MATERIALS RECIPE
   const handleLogProduction = (newLog) => {
     // 1. Add to production logs
     setProductionLogs((prev) => [newLog, ...prev]);
 
-    // 2. Automatically ADD to inventory
+    // 2. Automatically ADD to finished goods inventory
     const prevQty = inventory[newLog.productId] || 0;
     const newQty = prevQty + newLog.quantity;
     setInventory((prev) => ({
@@ -420,6 +495,22 @@ export default function App() {
       reference: `وارد إنتاج عمال: ${newLog.workerName} (${newLog.shift})`,
       notes: newLog.notes || 'تمت الإضافة للمخزن أوتوماتيكياً'
     });
+
+    // 4. Automatically DEDUCT raw materials according to recipe / formula
+    const dishRecipe = recipes[newLog.productId] || [];
+    if (dishRecipe.length > 0) {
+      setRawMaterials((prevRms) => {
+        return prevRms.map((rm) => {
+          const ingredient = dishRecipe.find((ing) => ing.rawMaterialId === rm.id);
+          if (ingredient) {
+            const needed = (ingredient.amountPerUnit || 0) * newLog.quantity;
+            const newStock = Math.max(0, Number((rm.stock - needed).toFixed(3)));
+            return { ...rm, stock: newStock };
+          }
+          return rm;
+        });
+      });
+    }
   };
 
   const handleDeleteProductionLog = (logId) => {
@@ -541,6 +632,81 @@ export default function App() {
     setBusinessInfo(newInfo);
   };
 
+  // Raw Materials Inventory Handlers
+  const handleUpdateRawMaterial = (updated) => {
+    setRawMaterials((prev) => prev.map((rm) => (rm.id === updated.id ? updated : rm)));
+  };
+
+  const handleAddRawMaterial = (newRm) => {
+    setRawMaterials((prev) => [newRm, ...prev]);
+  };
+
+  const handleDeleteRawMaterial = (rmId) => {
+    setRawMaterials((prev) => prev.filter((rm) => rm.id !== rmId));
+  };
+
+  // Dish Recipes / Formulas Handlers
+  const handleUpdateRecipe = (productId, newIngredients) => {
+    setRecipes((prev) => ({
+      ...prev,
+      [productId]: newIngredients
+    }));
+  };
+
+  // Administrative Expenses Handlers
+  const handleAddExpense = (newExp) => {
+    setExpenses((prev) => [newExp, ...prev]);
+  };
+
+  const handleDeleteExpense = (expId) => {
+    setExpenses((prev) => prev.filter((exp) => exp.id !== expId));
+  };
+
+  // Spoilage & Waste Handlers - Automatically Deducts from inventory
+  const handleLogWaste = (wasteEntry) => {
+    setWasteLogs((prev) => [wasteEntry, ...prev]);
+
+    if (wasteEntry.type === 'raw') {
+      // Deduct from rawMaterials stock
+      setRawMaterials((prev) =>
+        prev.map((rm) => {
+          if (rm.id === wasteEntry.itemId) {
+            return {
+              ...rm,
+              stock: Math.max(0, Number((rm.stock - wasteEntry.quantity).toFixed(3)))
+            };
+          }
+          return rm;
+        })
+      );
+    } else if (wasteEntry.type === 'product') {
+      // Deduct from finished product inventory
+      const cur = inventory[wasteEntry.itemId] || 0;
+      setInventory((prev) => ({
+        ...prev,
+        [wasteEntry.itemId]: Math.max(0, cur - wasteEntry.quantity)
+      }));
+
+      // Audit movement
+      handleAddStockMovement({
+        id: 'mov_waste_' + Date.now(),
+        date: new Date().toLocaleString('ar-EG'),
+        type: 'out_waste',
+        productId: wasteEntry.itemId,
+        productName: wasteEntry.itemName,
+        quantityChange: -wasteEntry.quantity,
+        previousStock: cur,
+        newStock: Math.max(0, cur - wasteEntry.quantity),
+        reference: `تسجيل هالك وتوالف: ${wasteEntry.reason}`,
+        notes: `المسؤول: ${wasteEntry.reportedBy || 'المطبخ'}`
+      });
+    }
+  };
+
+  const handleDeleteWasteLog = (wasteId) => {
+    setWasteLogs((prev) => prev.filter((w) => w.id !== wasteId));
+  };
+
   // Filtered products for public storefront
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -610,36 +776,37 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-stone-50 text-stone-900">
       
-      {/* Header with Auth, Cart & Language Switcher */}
-      <Header
-        cartCount={cartCount}
-        cartTotal={cartTotal}
-        onOpenCart={() => setIsCartOpen(true)}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        currentUser={currentUser}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
-        onOpenAdmin={() => setIsAdminDashboardOpen(true)}
-        onLogout={handleLogout}
-        wholesaleDiscountPct={wholesaleDiscountPct}
-        businessInfo={businessInfo}
-        lang={lang}
-        t={t}
-        onToggleLang={handleToggleLang}
-      />
+      {/* Sticky Header & Category Navigation Bar */}
+      <div className="sticky top-0 z-40 bg-white">
+        <Header
+          cartCount={cartCount}
+          cartTotal={cartTotal}
+          onOpenCart={() => setIsCartOpen(true)}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          currentUser={currentUser}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
+          onOpenAdmin={() => setIsAdminDashboardOpen(true)}
+          onLogout={handleLogout}
+          wholesaleDiscountPct={wholesaleDiscountPct}
+          businessInfo={businessInfo}
+          lang={lang}
+          t={t}
+          onToggleLang={handleToggleLang}
+        />
 
-      {/* Category Tabs */}
-      <CategoryFilter
-        activeCategory={activeCategory}
-        onSelectCategory={(catId) => {
-          setActiveCategory(catId);
-        }}
-        lang={lang}
-        t={t}
-      />
+        <CategoryFilter
+          activeCategory={activeCategory}
+          onSelectCategory={(catId) => {
+            setActiveCategory(catId);
+          }}
+          lang={lang}
+          t={t}
+        />
+      </div>
 
       {/* Main Dishes Catalog */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-32 md:pb-8">
         
         {/* Filter bar info & Wholesale Alert */}
         <div className="space-y-2 mb-4">
@@ -699,6 +866,10 @@ export default function App() {
                   onAddToCart={handleAddToCart}
                   currentUser={currentUser}
                   wholesaleDiscountPct={wholesaleDiscountPct}
+                  onEditProduct={(p) => {
+                    setAdminInitialTab('catalog');
+                    setIsAdminDashboardOpen(true);
+                  }}
                   lang={lang}
                   t={t}
                 />
@@ -807,6 +978,21 @@ export default function App() {
           onResetProducts={handleResetProducts}
           businessInfo={businessInfo}
           onUpdateBusinessInfo={handleUpdateBusinessInfo}
+          // Raw Materials & Recipes
+          rawMaterials={rawMaterials}
+          onUpdateRawMaterial={handleUpdateRawMaterial}
+          onAddRawMaterial={handleAddRawMaterial}
+          onDeleteRawMaterial={handleDeleteRawMaterial}
+          recipes={recipes}
+          onUpdateRecipe={handleUpdateRecipe}
+          // Expenses & Net Profit
+          expenses={expenses}
+          onAddExpense={handleAddExpense}
+          onDeleteExpense={handleDeleteExpense}
+          // Spoilage & Waste
+          wasteLogs={wasteLogs}
+          onLogWaste={handleLogWaste}
+          onDeleteWasteLog={handleDeleteWasteLog}
           initialTab={adminInitialTab}
           lang={lang}
           onToggleLang={handleToggleLang}
@@ -891,8 +1077,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating Call & WhatsApp Pill Button */}
-      <div className={`fixed bottom-5 ${lang === 'ar' ? 'left-5' : 'right-5'} z-40 flex items-center gap-2`}>
+      {/* Desktop-only Floating Call & WhatsApp Pill Button */}
+      <div className={`hidden md:flex fixed bottom-5 ${lang === 'ar' ? 'left-5' : 'right-5'} z-40 items-center gap-2`}>
         <a
           href={`tel:${businessInfo.phone || BUSINESS_INFO.phone}`}
           className="bg-stone-900 hover:bg-stone-800 text-white p-3 rounded-full shadow-lg flex items-center justify-center transition-colors"
@@ -912,6 +1098,36 @@ export default function App() {
           <span>{t.whatsappOrder} ({businessInfo.phoneDisplay || businessInfo.phone || BUSINESS_INFO.phoneDisplay})</span>
         </a>
       </div>
+
+      {/* Mobile Ergonomic Bottom Navigation Bar with Quick Order Strip */}
+      <MobileBottomBar
+        cartCount={cartCount}
+        cartTotal={cartTotal}
+        onOpenCart={() => setIsCartOpen(true)}
+        onlyFasting={onlyFasting}
+        onToggleFasting={() => setOnlyFasting((prev) => !prev)}
+        onSelectMenu={() => {
+          setActiveCategory('all');
+          setOnlyFasting(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onFocusSearch={() => {
+          const el = document.getElementById('mobile-search-input');
+          if (el) {
+            el.focus();
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }}
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenAdmin={() => setIsAdminDashboardOpen(true)}
+        onLogout={handleLogout}
+        businessInfo={businessInfo}
+        lang={lang}
+        t={t}
+        onToggleLang={handleToggleLang}
+        activeCategory={activeCategory}
+      />
 
     </div>
   );
