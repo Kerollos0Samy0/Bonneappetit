@@ -3,8 +3,18 @@ import { getFirestore } from 'firebase/firestore';
 
 const CONFIG_STORAGE_KEY = 'bonne_appetit_firebase_config';
 
+export const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDg6QNQONqU1oGB6TREwV_TtGzkWOGFXow",
+  authDomain: "bonneappetite-20765.firebaseapp.com",
+  projectId: "bonneappetite-20765",
+  storageBucket: "bonneappetite-20765.firebasestorage.app",
+  messagingSenderId: "47893032744",
+  appId: "1:47893032744:web:9942a237b265466d3fca1d",
+  measurementId: "G-L3J7LR79Y3"
+};
+
 /**
- * Retrieve current Firebase configuration from localStorage or Vite environment variables
+ * Retrieve current Firebase configuration from localStorage, Vite environment variables, or pre-configured defaults
  */
 export function getFirebaseConfig() {
   try {
@@ -27,11 +37,13 @@ export function getFirebaseConfig() {
       projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
       storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
       messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-      appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
+      appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+      measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ''
     };
   }
 
-  return null;
+  // Pre-configured project configuration (from project bonneappetite-20765)
+  return DEFAULT_FIREBASE_CONFIG;
 }
 
 /**
