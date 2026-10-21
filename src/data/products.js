@@ -133,6 +133,55 @@ export const CATEGORIES = [
 
 const RAW_PRODUCTS = [
   // ==========================================
+  // الأصناف المضافة الخاصة
+  // ==========================================
+  {
+    id: "prod_1792594763026",
+    name: "ورق عنب لحمة",
+    category: "special",
+    price: 80,
+    wholesalePrice: 68,
+    unit: "طبق نصف كيلو (0.5 كجم)",
+    weightKg: 0.5,
+    description: "ورق عنب بناتي ناعم محشو بلحم بلدي مفروم متبل بالخلطة الخاصة، جاهز للتسوية مباشرة.",
+    isFasting: false,
+    isSpecial: true
+  },
+  {
+    id: "prod_1792595575457",
+    name: "ورق عنب ارز",
+    category: "vegetables",
+    price: 50,
+    wholesalePrice: 43,
+    unit: "طبق نصف كيلو (0.5 كجم)",
+    weightKg: 0.5,
+    description: "ورق عنب بناتي ناعم محشو بالأرز المصري المبهر والخضار النضرة، صيامي خفيف ولذيذ.",
+    isFasting: true
+  },
+  {
+    id: "prod_1792595777422",
+    name: "بسلة وجزر",
+    category: "vegetables",
+    price: 50,
+    wholesalePrice: 43,
+    unit: "طبق نصف كيلو (0.5 كجم)",
+    weightKg: 0.5,
+    description: "بسلة خضراء وجزر طازج مقطع ومجهز للطهي الفوري.",
+    isFasting: true
+  },
+  {
+    id: "prod_1792597679087",
+    name: "كرمب ارز",
+    category: "vegetables",
+    price: 50,
+    wholesalePrice: 43,
+    unit: "طبق نصف كيلو (0.5 كجم)",
+    weightKg: 0.5,
+    description: "محشي كرنب صيامي محشو بالأرز المتبل بالخلطة الشرقية، جاهز للتسوية مباشرة.",
+    isFasting: true
+  },
+
+  // ==========================================
   // 1. سبشيال (SPECIAL - Purple) [لفترة محدودة]
   // ==========================================
   {

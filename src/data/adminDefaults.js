@@ -9,11 +9,71 @@ export const DEFAULT_WORKERS = [
   { id: 'w_5', name: 'أم محمود', role: 'تجهيز وإنتاج أكلات بيتي', phone: '', active: true }
 ];
 
+// Restored baseline inventory stock (185 units across 45 products)
+export const DEFAULT_INVENTORY_STOCK = {
+  // الأصناف المضافة المخصصة (إجمالي: 76)
+  prod_1792594763026: 11, // ورق عنب لحمة
+  prod_1792595575457: 35, // ورق عنب ارز
+  prod_1792595777422: 4,  // بسلة وجزر
+  prod_1792597679087: 26, // كرمب ارز
+
+  // الأصناف المنتهية من المخزن (0)
+  sp1: 0,
+  f1: 0,
+  f2: 0,
+  f3: 0,
+  f4: 0,
+  f5: 0,
+  f6: 0,
+
+  // الدواجن (إجمالي: 39)
+  p1: 8,
+  p2: 6,
+  p3: 6,
+  p4: 8,
+  p5: 5,
+  p6: 6,
+
+  // اللحوم (إجمالي: 43)
+  b1: 4,
+  b2: 3,
+  b3: 4,
+  b4: 3,
+  b5: 4,
+  b6: 3,
+  b7: 4,
+  b8: 3,
+  b9: 4,
+  b10: 3,
+  b11: 2,
+  b12: 2,
+  b13: 2,
+  b14: 2,
+
+  // الخضار (إجمالي: 27)
+  v1: 3,
+  v2: 2,
+  v3: 2,
+  v4: 2,
+  v5: 2,
+  v6: 2,
+  v7: 2,
+  v8: 2,
+  v9: 2,
+  v10: 2,
+  v11: 2,
+  v12: 2,
+  v13: 1,
+  v14: 1
+};
+
 // Generate initial inventory with realistic stock numbers
 export const getInitialInventory = () => {
   const stock = {};
   PRODUCTS.forEach((product) => {
-    stock[product.id] = 25;
+    stock[product.id] = DEFAULT_INVENTORY_STOCK[product.id] !== undefined
+      ? DEFAULT_INVENTORY_STOCK[product.id]
+      : 0;
   });
   return stock;
 };

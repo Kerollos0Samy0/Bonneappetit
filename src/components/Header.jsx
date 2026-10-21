@@ -17,9 +17,7 @@ export default function Header({
   businessInfo = BUSINESS_INFO,
   lang = 'ar',
   t = UI_TRANSLATIONS.ar,
-  onToggleLang,
-  onOpenFirebaseModal,
-  isCloudConnected = false
+  onToggleLang
 }) {
   const info = businessInfo || BUSINESS_INFO;
 
