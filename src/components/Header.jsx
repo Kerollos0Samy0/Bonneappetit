@@ -65,23 +65,6 @@ export default function Header({
               <span>{t.langToggleLabel}</span>
             </button>
 
-            {/* Cloud Sync Status / Config Button */}
-            {onOpenFirebaseModal && (
-              <button
-                onClick={onOpenFirebaseModal}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border shadow-xs ${
-                  isCloudConnected
-                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-700/70 hover:bg-emerald-900'
-                    : 'bg-amber-950/80 text-amber-300 border-amber-700/70 hover:bg-amber-900 animate-pulse'
-                }`}
-                title={isCloudConnected ? 'السحابة متصلة وتزامن لحظياً بين الأجهزة' : 'اضغط لربط ومزامنة بيانات Firebase سحابياً'}
-              >
-                <Cloud className={`w-3.5 h-3.5 ${isCloudConnected ? 'text-emerald-400' : 'text-amber-400'}`} />
-                <span className="hidden sm:inline">{isCloudConnected ? 'مزامنة سحابية 🟢' : 'ربط السحابة ⚠️'}</span>
-                <span className="sm:hidden">{isCloudConnected ? '🟢' : '☁️'}</span>
-              </button>
-            )}
-
             {/* Auth / Account Link */}
             {currentUser?.role === 'admin' ? (
               <div className="flex items-center gap-2">
