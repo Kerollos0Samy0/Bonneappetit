@@ -3,9 +3,9 @@ import {
   X, ShoppingBag, Users, Percent, DollarSign, CheckCircle2, Clock, 
   Truck, MessageCircle, Trash2, Save, UserPlus, Boxes, UserCheck, 
   Receipt, ArrowDownRight, Package, ArrowUpRight, Lock, ShieldCheck, Key, Eye, EyeOff,
-  Utensils, Globe, Phone, Volume2, Bell, Layers, Wallet, AlertOctagon, FileText
+  Utensils, Globe, Phone, Volume2, Bell, Layers, Wallet, AlertOctagon, FileText,
+  Cloud, CloudOff
 } from 'lucide-react';
-import { BUSINESS_INFO, PRODUCTS } from '../data/products';
 import { playLoudOrderAlert, requestDesktopNotificationPermission, getNotificationPermissionStatus } from '../utils/orderNotifier';
 import { UI_TRANSLATIONS } from '../data/translations';
 import InventoryManager from './admin/InventoryManager';
@@ -71,7 +71,9 @@ export default function AdminDashboard({
   onUpdateBusinessInfo,
   initialTab = 'inventory',
   lang = 'ar',
-  onToggleLang
+  onToggleLang,
+  onOpenFirebaseModal,
+  isCloudConnected = false
 }) {
   if (!isOpen) return null;
 
@@ -284,6 +286,26 @@ export default function AdminDashboard({
 
         {/* Top Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Firebase Cloud Sync Button */}
+          {onOpenFirebaseModal && (
+            <button
+              type="button"
+              onClick={onOpenFirebaseModal}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-xs border ${
+                isCloudConnected
+                  ? 'bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border-emerald-700'
+                  : 'bg-amber-950/80 hover:bg-amber-900 text-amber-300 border-amber-700 animate-pulse'
+              }`}
+              title={lang === 'en' ? 'Firebase Realtime Cloud Sync Settings' : 'إعدادات المزامنة السحابية اللحظية (Firebase) لمزامنة البيانات بين الأجهزة'}
+            >
+              <Cloud className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">
+                {isCloudConnected ? '🟢 السحابة متصلة' : '☁️ ربط السحابة (Firebase)'}
+              </span>
+              <span className="sm:hidden">{isCloudConnected ? '🟢 متصل' : '☁️ سحابي'}</span>
+            </button>
+          )}
+
           {/* Test Chime Button */}
           <button
             type="button"

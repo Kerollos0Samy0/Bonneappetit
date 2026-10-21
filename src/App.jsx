@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Header from './components/Header';
 import CategoryFilter from './components/CategoryFilter';
 import ProductCard from './components/ProductCard';
@@ -21,6 +21,9 @@ import {
 import { UI_TRANSLATIONS, getLocalizedProduct } from './data/translations';
 import { MessageCircle, Phone, Filter, Bell, Volume2, X } from 'lucide-react';
 import { playLoudOrderAlert, sendDesktopNotification, requestDesktopNotificationPermission } from './utils/orderNotifier';
+import { isFirebaseConfigured } from './services/firebase';
+import { subscribeToCloudDocument, saveDocumentToCloud } from './services/cloudSyncService';
+import FirebaseConfigModal from './components/admin/FirebaseConfigModal';
 
 export default function App() {
   // Cart state
@@ -221,6 +224,8 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [adminInitialTab, setAdminInitialTab] = useState('inventory');
+  const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState(false);
+  const isRemoteUpdateRef = useRef(false);
   const [incomingOrderAlert, setIncomingOrderAlert] = useState(null);
 
   // Auto-dismiss incoming order banner after 35 seconds
@@ -296,9 +301,124 @@ export default function App() {
     } catch (e) {}
   }, [currentUser]);
 
+  // Helper to sync local change to cloud
+  const syncToCloud = (docKey, payload) => {
+    if (isRemoteUpdateRef.current) return;
+    if (isFirebaseConfigured()) {
+      saveDocumentToCloud(docKey, payload);
+    }
+  };
+
+  // Real-time synchronization subscription with Firebase Firestore
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+
+    const unsubs = [];
+
+    const handleRemoteUpdate = (setter, val) => {
+      isRemoteUpdateRef.current = true;
+      setter(val);
+      setTimeout(() => {
+        isRemoteUpdateRef.current = false;
+      }, 350);
+    };
+
+    // 1. Products
+    unsubs.push(
+      subscribeToCloudDocument('products', (data) => {
+        if (data?.items && Array.isArray(data.items)) {
+          handleRemoteUpdate(setProducts, data.items);
+        }
+      })
+    );
+
+    // 2. Inventory
+    unsubs.push(
+      subscribeToCloudDocument('inventory', (data) => {
+        if (data?.stock) {
+          handleRemoteUpdate(setInventory, data.stock);
+        }
+      })
+    );
+
+    // 3. Wholesale
+    unsubs.push(
+      subscribeToCloudDocument('wholesale', (data) => {
+        if (data?.users) handleRemoteUpdate(setWholesaleUsers, data.users);
+        if (data?.discountPct !== undefined) handleRemoteUpdate(setWholesaleDiscountPct, data.discountPct);
+      })
+    );
+
+    // 4. Invoices
+    unsubs.push(
+      subscribeToCloudDocument('invoices', (data) => {
+        if (data?.list) handleRemoteUpdate(setInvoices, data.list);
+      })
+    );
+
+    // 5. Orders
+    unsubs.push(
+      subscribeToCloudDocument('orders', (data) => {
+        if (data?.list) handleRemoteUpdate(setOrders, data.list);
+      })
+    );
+
+    // 6. Expenses
+    unsubs.push(
+      subscribeToCloudDocument('expenses', (data) => {
+        if (data?.list) handleRemoteUpdate(setExpenses, data.list);
+      })
+    );
+
+    // 7. Raw Materials & Recipes
+    unsubs.push(
+      subscribeToCloudDocument('rawMaterials', (data) => {
+        if (data?.materials) handleRemoteUpdate(setRawMaterials, data.materials);
+        if (data?.recipes) handleRemoteUpdate(setRecipes, data.recipes);
+      })
+    );
+
+    // 8. Waste
+    unsubs.push(
+      subscribeToCloudDocument('waste', (data) => {
+        if (data?.records) handleRemoteUpdate(setWasteLogs, data.records);
+      })
+    );
+
+    // 9. Workers & Production Logs
+    unsubs.push(
+      subscribeToCloudDocument('workers', (data) => {
+        if (data?.workers) handleRemoteUpdate(setWorkers, data.workers);
+        if (data?.productionLogs) handleRemoteUpdate(setProductionLogs, data.productionLogs);
+      })
+    );
+
+    // 10. Stock Movements
+    unsubs.push(
+      subscribeToCloudDocument('stockMovements', (data) => {
+        if (data?.movements) handleRemoteUpdate(setStockMovements, data.movements);
+      })
+    );
+
+    // 11. Business Info
+    unsubs.push(
+      subscribeToCloudDocument('businessInfo', (data) => {
+        if (data?.info) handleRemoteUpdate(setBusinessInfo, data.info);
+      })
+    );
+
+    return () => {
+      unsubs.forEach((unsub) => {
+        if (typeof unsub === 'function') unsub();
+      });
+    };
+  }, []);
+
+  // Save effects: dual-write to localStorage (offline cache) and Firebase Firestore (cloud)
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_wholesale_discount', String(wholesaleDiscountPct));
+      syncToCloud('wholesale', { users: wholesaleUsers, discountPct: wholesaleDiscountPct });
     } catch (e) {}
   }, [wholesaleDiscountPct]);
 
@@ -306,18 +426,21 @@ export default function App() {
     try {
       localStorage.setItem('bonne_appetit_wholesale_users_v3', JSON.stringify(wholesaleUsers));
       localStorage.setItem('bonne_appetit_wholesale_users', JSON.stringify(wholesaleUsers));
+      syncToCloud('wholesale', { users: wholesaleUsers, discountPct: wholesaleDiscountPct });
     } catch (e) {}
   }, [wholesaleUsers]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_orders', JSON.stringify(orders));
+      syncToCloud('orders', { list: orders });
     } catch (e) {}
   }, [orders]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_inventory_v1', JSON.stringify(inventory));
+      syncToCloud('inventory', { stock: inventory });
     } catch (e) {}
   }, [inventory]);
 
@@ -325,62 +448,113 @@ export default function App() {
     try {
       localStorage.setItem('bonne_appetit_workers_v2', JSON.stringify(workers));
       localStorage.setItem('bonne_appetit_workers', JSON.stringify(workers));
+      syncToCloud('workers', { workers, productionLogs });
     } catch (e) {}
   }, [workers]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_production_logs', JSON.stringify(productionLogs));
+      syncToCloud('workers', { workers, productionLogs });
     } catch (e) {}
   }, [productionLogs]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_invoices', JSON.stringify(invoices));
+      syncToCloud('invoices', { list: invoices });
     } catch (e) {}
   }, [invoices]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_stock_movements', JSON.stringify(stockMovements));
+      syncToCloud('stockMovements', { movements: stockMovements });
     } catch (e) {}
   }, [stockMovements]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_raw_materials_v1', JSON.stringify(rawMaterials));
+      syncToCloud('rawMaterials', { materials: rawMaterials, recipes });
     } catch (e) {}
   }, [rawMaterials]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_recipes_v1', JSON.stringify(recipes));
+      syncToCloud('rawMaterials', { materials: rawMaterials, recipes });
     } catch (e) {}
   }, [recipes]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_expenses_v1', JSON.stringify(expenses));
+      syncToCloud('expenses', { list: expenses });
     } catch (e) {}
   }, [expenses]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_waste_logs_v1', JSON.stringify(wasteLogs));
+      syncToCloud('waste', { records: wasteLogs });
     } catch (e) {}
   }, [wasteLogs]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_products_v2', JSON.stringify(products));
+      syncToCloud('products', { items: products });
     } catch (e) {}
   }, [products]);
 
   useEffect(() => {
     try {
       localStorage.setItem('bonne_appetit_business_info', JSON.stringify(businessInfo));
+      syncToCloud('businessInfo', { info: businessInfo });
     } catch (e) {}
   }, [businessInfo]);
+
+  // Handle Pull Cloud Data callback
+  const handleCloudDataPulled = (cloudData) => {
+    if (!cloudData) return;
+    isRemoteUpdateRef.current = true;
+    if (cloudData.products?.items) setProducts(cloudData.products.items);
+    if (cloudData.inventory?.stock) setInventory(cloudData.inventory.stock);
+    if (cloudData.wholesale?.users) setWholesaleUsers(cloudData.wholesale.users);
+    if (cloudData.wholesale?.discountPct !== undefined) setWholesaleDiscountPct(cloudData.wholesale.discountPct);
+    if (cloudData.invoices?.list) setInvoices(cloudData.invoices.list);
+    if (cloudData.orders?.list) setOrders(cloudData.orders.list);
+    if (cloudData.expenses?.list) setExpenses(cloudData.expenses.list);
+    if (cloudData.rawMaterials?.materials) setRawMaterials(cloudData.rawMaterials.materials);
+    if (cloudData.rawMaterials?.recipes) setRecipes(cloudData.rawMaterials.recipes);
+    if (cloudData.waste?.records) setWasteLogs(cloudData.waste.records);
+    if (cloudData.workers?.workers) setWorkers(cloudData.workers.workers);
+    if (cloudData.workers?.productionLogs) setProductionLogs(cloudData.workers.productionLogs);
+    if (cloudData.stockMovements?.movements) setStockMovements(cloudData.stockMovements.movements);
+    if (cloudData.businessInfo?.info) setBusinessInfo(cloudData.businessInfo.info);
+    setTimeout(() => {
+      isRemoteUpdateRef.current = false;
+    }, 400);
+  };
+
+  // State object for master cloud sync
+  const currentAppState = {
+    products,
+    inventory,
+    wholesaleUsers,
+    wholesaleDiscountPct,
+    invoices,
+    orders,
+    expenses,
+    rawMaterials,
+    recipes,
+    wasteRecords: wasteLogs,
+    workers,
+    productionLogs,
+    stockMovements,
+    businessInfo
+  };
 
   // Auth Handlers
   const handleLoginSuccess = (user) => {
@@ -793,6 +967,8 @@ export default function App() {
           lang={lang}
           t={t}
           onToggleLang={handleToggleLang}
+          onOpenFirebaseModal={() => setIsFirebaseModalOpen(true)}
+          isCloudConnected={isFirebaseConfigured()}
         />
 
         <CategoryFilter
@@ -996,8 +1172,19 @@ export default function App() {
           initialTab={adminInitialTab}
           lang={lang}
           onToggleLang={handleToggleLang}
+          onOpenFirebaseModal={() => setIsFirebaseModalOpen(true)}
+          isCloudConnected={isFirebaseConfigured()}
         />
       </ErrorBoundary>
+
+      {/* Firebase Cloud Sync Config Modal */}
+      <FirebaseConfigModal
+        isOpen={isFirebaseModalOpen}
+        onClose={() => setIsFirebaseModalOpen(false)}
+        currentAppState={currentAppState}
+        onCloudDataPulled={handleCloudDataPulled}
+        lang={lang}
+      />
 
       {/* Realtime Loud Order Alert Toast Banner */}
       {incomingOrderAlert && (
