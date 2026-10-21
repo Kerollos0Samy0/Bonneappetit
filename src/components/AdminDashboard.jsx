@@ -265,34 +265,35 @@ export default function AdminDashboard({
     >
       
       {/* Top Navbar Header */}
-      <header className="bg-stone-900 text-white px-4 sm:px-8 py-3.5 border-b border-stone-800 flex items-center justify-between shrink-0 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-brand-500 text-white flex items-center justify-center font-black text-lg shadow-sm">
+      {/* Top Navbar Header */}
+      <header className="bg-stone-900 text-white px-4 sm:px-6 py-2.5 border-b border-stone-800 flex items-center justify-between shrink-0 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-brand-500 text-white flex items-center justify-center font-black text-base shadow-xs shrink-0">
             BA
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-xl font-black tracking-tight">
+              <h1 className="text-sm sm:text-base font-black tracking-tight">
                 {t.adminTitle} <span className="text-brand-400 font-serif">Bonne Appetit</span>
               </h1>
-              <span className="hidden sm:inline-block text-[11px] font-bold text-brand-300 bg-stone-800 px-2.5 py-0.5 rounded border border-stone-700 font-mono">
+              <span className="hidden sm:inline-block text-[10px] font-bold text-brand-300 bg-stone-800 px-2 py-0.5 rounded border border-stone-700 font-mono">
                 {t.adminBadge}
               </span>
             </div>
-            <p className="text-[11px] text-stone-400 hidden sm:block">
+            <p className="text-[10px] text-stone-400 hidden md:block">
               {t.adminSubtitle}
             </p>
           </div>
         </div>
 
         {/* Top Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Firebase Cloud Sync Button */}
           {onOpenFirebaseModal && (
             <button
               type="button"
               onClick={onOpenFirebaseModal}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-xs border ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs border ${
                 isCloudConnected
                   ? 'bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border-emerald-700'
                   : 'bg-amber-950/80 hover:bg-amber-900 text-amber-300 border-amber-700 animate-pulse'
@@ -301,9 +302,9 @@ export default function AdminDashboard({
             >
               <Cloud className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">
-                {isCloudConnected ? '🟢 السحابة متصلة' : '☁️ ربط السحابة (Firebase)'}
+                {isCloudConnected ? '🟢 السحابة متصلة' : '☁️ ربط السحابة'}
               </span>
-              <span className="sm:hidden">{isCloudConnected ? '🟢 متصل' : '☁️ سحابي'}</span>
+              <span className="sm:hidden">{isCloudConnected ? '🟢' : '☁️'}</span>
             </button>
           )}
 
@@ -311,7 +312,7 @@ export default function AdminDashboard({
           <button
             type="button"
             onClick={handleTestChime}
-            className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all shadow-xs"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-bold transition-all shadow-xs"
             title={lang === 'en' ? 'Test loud restaurant order chime' : 'تجربة صوت تنبيه الأوردرات الجديد (رنة المطاعم العالية)'}
           >
             <Volume2 className={`w-3.5 h-3.5 ${isTestingSound ? 'animate-bounce text-amber-200' : ''}`} />
@@ -324,7 +325,7 @@ export default function AdminDashboard({
             <button
               type="button"
               onClick={onToggleLang}
-              className="flex items-center gap-1.5 px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
               title={lang === 'ar' ? 'Switch to English' : 'التحويل للغة العربية'}
             >
               <Globe className="w-3.5 h-3.5 text-brand-400" />
@@ -335,71 +336,80 @@ export default function AdminDashboard({
           {/* Return to Store */}
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 px-2.5 sm:px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-xl text-xs font-bold transition-all border border-stone-700 shadow-xs"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-lg text-xs font-bold transition-all border border-stone-700 shadow-xs"
             title={t.adminBackToStore}
           >
             <span className="hidden sm:inline">{t.adminBackToStore}</span>
-            <span className="text-sm">🏪</span>
+            <span className="text-xs">🏪</span>
           </button>
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition-colors border border-stone-700"
+            className="w-8 h-8 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition-colors border border-stone-700"
             title={t.adminCloseTooltip}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      {/* Global Summary Stats Row */}
-      <div className="bg-white border-b border-stone-200 px-4 sm:px-8 py-3 shrink-0">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">{t.adminStockBalance}</span>
-            <div className="flex items-center gap-2">
-              <Boxes className="w-4 h-4 text-brand-600" />
-              <span className="text-xl font-black text-stone-900 font-mono">{totalUnitsInStock}</span>
-              <span className="text-[11px] text-stone-400">{t.adminDishUnit}</span>
+      {/* Global Summary Stats Row - Sleek & Compact */}
+      <div className="bg-white border-b border-stone-200 px-4 sm:px-6 py-2 shrink-0">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+          <div className="bg-stone-50 px-3 py-2 rounded-xl border border-stone-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-stone-500 font-bold text-[11px] block">{t.adminStockBalance}</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-lg font-black text-stone-900 font-mono">{totalUnitsInStock}</span>
+                <span className="text-[10px] text-stone-400">{t.adminDishUnit}</span>
+              </div>
             </div>
+            <Boxes className="w-5 h-5 text-brand-600 opacity-70" />
           </div>
 
-          <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">{t.adminTotalSales}</span>
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-emerald-600" />
-              <span className="text-xl font-black text-emerald-700 font-mono">{totalRevenue.toLocaleString()} {t.currency}</span>
+          <div className="bg-stone-50 px-3 py-2 rounded-xl border border-stone-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-stone-500 font-bold text-[11px] block">{t.adminTotalSales}</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-lg font-black text-emerald-700 font-mono">{totalRevenue.toLocaleString()}</span>
+                <span className="text-[10px] text-emerald-600 font-bold">{t.currency}</span>
+              </div>
             </div>
+            <DollarSign className="w-5 h-5 text-emerald-600 opacity-70" />
           </div>
 
-          <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">{t.adminInvoicesAndOrders}</span>
-            <div className="flex items-center gap-2">
-              <Receipt className="w-4 h-4 text-indigo-600" />
-              <span className="text-xl font-black text-stone-900 font-mono">{totalInvoicesCount + totalOrdersCount}</span>
-              <span className="text-[11px] text-stone-400">{t.adminOperations}</span>
+          <div className="bg-stone-50 px-3 py-2 rounded-xl border border-stone-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-stone-500 font-bold text-[11px] block">{t.adminInvoicesAndOrders}</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-lg font-black text-stone-900 font-mono">{totalInvoicesCount + totalOrdersCount}</span>
+                <span className="text-[10px] text-stone-400">{t.adminOperations}</span>
+              </div>
             </div>
+            <Receipt className="w-5 h-5 text-indigo-600 opacity-70" />
           </div>
 
-          <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 shadow-xs">
-            <span className="text-stone-500 font-medium block mb-1">{t.adminApprovedWholesale}</span>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-amber-600" />
-              <span className="text-xl font-black text-stone-900 font-mono">{totalWholesaleMerchants}</span>
-              <span className="text-[11px] text-stone-400">{t.adminCanteensStores}</span>
+          <div className="bg-stone-50 px-3 py-2 rounded-xl border border-stone-200 shadow-2xs flex items-center justify-between">
+            <div>
+              <span className="text-stone-500 font-bold text-[11px] block">{t.adminApprovedWholesale}</span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-lg font-black text-stone-900 font-mono">{totalWholesaleMerchants}</span>
+                <span className="text-[10px] text-stone-400">{t.adminCanteensStores}</span>
+              </div>
             </div>
+            <Users className="w-5 h-5 text-amber-600 opacity-70" />
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="bg-white border-b border-stone-200 px-4 sm:px-8 shrink-0">
+      <div className="bg-white border-b border-stone-200 px-4 sm:px-6 shrink-0">
         <div className="max-w-7xl mx-auto flex overflow-x-auto text-xs font-bold scrollbar-none">
           
           {/* TAB: Inventory */}
           <button
             onClick={() => setActiveTab('inventory')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'inventory'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'
@@ -412,7 +422,7 @@ export default function AdminDashboard({
           {/* TAB: Catalog & Menu */}
           <button
             onClick={() => setActiveTab('catalog')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'catalog'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'
@@ -425,7 +435,7 @@ export default function AdminDashboard({
           {/* TAB: Workers Production */}
           <button
             onClick={() => setActiveTab('workers')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'workers'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'
@@ -438,7 +448,7 @@ export default function AdminDashboard({
           {/* TAB: Invoices & POS */}
           <button
             onClick={() => setActiveTab('invoices')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'invoices'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'
@@ -451,7 +461,7 @@ export default function AdminDashboard({
           {/* TAB: Online Orders */}
           <button
             onClick={() => setActiveTab('orders')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'orders'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'
@@ -464,7 +474,7 @@ export default function AdminDashboard({
           {/* TAB: Raw Materials & Recipes */}
           <button
             onClick={() => setActiveTab('raw_materials')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'raw_materials'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'
@@ -477,7 +487,7 @@ export default function AdminDashboard({
           {/* TAB: Expenses & Net Profit */}
           <button
             onClick={() => setActiveTab('expenses')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'expenses'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'
@@ -490,7 +500,7 @@ export default function AdminDashboard({
           {/* TAB: Spoilage & Waste */}
           <button
             onClick={() => setActiveTab('waste')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'waste'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'
@@ -503,7 +513,7 @@ export default function AdminDashboard({
           {/* TAB: Merchants */}
           <button
             onClick={() => setActiveTab('merchants')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'merchants'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'
@@ -516,7 +526,7 @@ export default function AdminDashboard({
           {/* TAB: Settings & Security */}
           <button
             onClick={() => setActiveTab('discount')}
-            className={`py-3.5 px-4 border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 ${
+            className={`py-2.5 px-3.5 border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
               activeTab === 'discount'
                 ? 'border-brand-500 text-brand-600 bg-brand-50/40'
                 : 'border-transparent text-stone-600 hover:text-stone-900'

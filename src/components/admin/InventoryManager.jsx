@@ -11,6 +11,14 @@ import ProductEditModal from './ProductEditModal';
 import ExcelImportModal from './ExcelImportModal';
 import { exportInventoryToExcel } from '../../utils/excelInventoryHandler';
 
+const CATEGORY_NAMES = {
+  vegetables: { nameAr: 'خضار', nameEn: 'Vegetables', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+  poultry: { nameAr: 'فراخ', nameEn: 'Poultry', color: 'bg-amber-50 text-amber-800 border-amber-200' },
+  beef: { nameAr: 'لحمة', nameEn: 'Beef', color: 'bg-red-50 text-red-800 border-red-200' },
+  fish: { nameAr: 'سمك', nameEn: 'Fish', color: 'bg-sky-50 text-sky-800 border-sky-200' },
+  special: { nameAr: 'سبشيال', nameEn: 'Special', color: 'bg-purple-50 text-purple-800 border-purple-200' },
+};
+
 export default function InventoryManager({
   products = PRODUCTS,
   inventory = {},
@@ -246,118 +254,74 @@ export default function InventoryManager({
         </div>
       )}
 
-      {/* Top Banner: Informing user about full control & Excel buttons */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-white rounded-2xl p-4 sm:p-5 border border-stone-800 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-500 text-white flex items-center justify-center font-bold shrink-0">
-            <Sparkles className="w-5 h-5" />
+      {/* Sleek Inventory Header Bar - Compact & Clean */}
+      <div className="bg-white rounded-2xl p-3 sm:p-4 border border-stone-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 border border-brand-200 flex items-center justify-center font-bold shrink-0">
+            <Boxes className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="font-black text-sm text-stone-100">
-                {lang === 'en' ? 'Central Inventory & Full Product Control' : 'المخزن المركزي والتحكم الشامل في الأصناف'}
+              <h4 className="font-black text-sm text-stone-900">
+                {lang === 'en' ? 'Central Inventory & Stock Control' : 'المخزن المركزي والتحكم في الرصيد'}
               </h4>
-              <span className="text-[10px] bg-brand-500/30 text-brand-300 border border-brand-500/50 px-2 py-0.5 rounded-full font-bold">
-                {lang === 'en' ? 'Full Control' : 'تعديل كامل متاح'}
+              <span className="text-[11px] bg-brand-50 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full font-bold">
+                {filteredProducts.length} {lang === 'en' ? 'items' : 'صنف'}
               </span>
             </div>
-            <p className="text-xs text-stone-400 mt-0.5">
-              {lang === 'en'
-                ? 'Export current inventory to Excel, edit prices or stock quantities on your computer, and upload back.'
-                : 'يمكنك تصدير المخزن والأسعار في شيت إكسيل، والتعديل بحرية، ثم إعادة رفع الشيت ليتم تحديث كل شيء تلقائياً.'}
+            <p className="text-xs text-stone-500 mt-0.5 flex items-center gap-2 flex-wrap">
+              <span>إجمالي الرصيد: <strong className="font-mono text-stone-800">{totalUnitsInStock}</strong> طبق</span>
+              <span>•</span>
+              <span>قيمة المخزون: <strong className="font-mono text-emerald-700">{totalValuation.toLocaleString()}</strong> {activeT.currency}</span>
+              {outOfStockCount > 0 && (
+                <>
+                  <span>•</span>
+                  <span className="text-red-600 font-bold">({outOfStockCount} صنف نفد)</span>
+                </>
+              )}
             </p>
           </div>
         </div>
 
-        {/* Action Buttons: Export Excel, Import Excel, Add Dish */}
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          {/* Export to Excel */}
+        {/* Action Buttons: Add, Export, Import */}
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
           <button
             type="button"
             onClick={handleExportExcel}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-2xs active:scale-95"
             title="تنزيل شيت إكسيل كامل للمخزن والأسعار (Export)"
           >
             <Download className="w-3.5 h-3.5" />
             <span>تصدير إكسيل 📥</span>
           </button>
 
-          {/* Upload / Import from Excel */}
           <button
             type="button"
             onClick={() => setIsExcelModalOpen(true)}
-            className="px-3.5 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white border border-stone-700 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+            className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-2xs active:scale-95"
             title="رفع شيت إكسيل معدل لتحديث المخزن (Upload)"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-            <span>استيراد وتحديث إكسيل 📤</span>
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <span>استيراد وتحديث 📤</span>
           </button>
 
-          {/* Add New Dish */}
           <button
             type="button"
             onClick={() => {
               setEditingProduct(null);
               setIsEditModalOpen(true);
             }}
-            className="px-3.5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md shrink-0 active:scale-95"
+            className="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>إضافة صنف ➕</span>
           </button>
         </div>
       </div>
-      
-      {/* Top Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
-          <div className="flex items-center justify-between text-stone-500 mb-1">
-            <span className="text-xs font-bold">{activeT.inv_totalStock}</span>
-            <Boxes className="w-4 h-4 text-brand-600" />
-          </div>
-          <span className="text-2xl font-black text-stone-900 font-mono">
-            {totalUnitsInStock}
-          </span>
-          <span className="text-[11px] text-stone-500 block mt-0.5">{activeT.adminDishUnit}</span>
-        </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
-          <div className="flex items-center justify-between text-stone-500 mb-1">
-            <span className="text-xs font-bold">{activeT.inv_valuation}</span>
-            <DollarSign className="w-4 h-4 text-emerald-600" />
-          </div>
-          <span className="text-2xl font-black text-emerald-700 font-mono">
-            {totalValuation.toLocaleString()}
-          </span>
-          <span className="text-[11px] text-stone-500 block mt-0.5">{activeT.currency}</span>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
-          <div className="flex items-center justify-between text-stone-500 mb-1">
-            <span className="text-xs font-bold">{activeT.inv_lowStock}</span>
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
-          </div>
-          <span className="text-2xl font-black text-amber-600 font-mono">
-            {lowStockCount}
-          </span>
-          <span className="text-[11px] text-stone-500 block mt-0.5">{lang === 'en' ? 'critical balance' : 'صنف رصيده حرج'}</span>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
-          <div className="flex items-center justify-between text-stone-500 mb-1">
-            <span className="text-xs font-bold">{lang === 'en' ? 'Out of Stock' : 'نفد تماماً'}</span>
-            <span className="w-2 h-2 rounded-full bg-red-500"></span>
-          </div>
-          <span className="text-2xl font-black text-red-600 font-mono">
-            {outOfStockCount}
-          </span>
-          <span className="text-[11px] text-stone-500 block mt-0.5">{lang === 'en' ? 'needs cooking' : 'بحاجة للإنتاج'}</span>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-3">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+      {/* Filter and Search Bar - Compact & Organized */}
+      <div className="bg-stone-50 p-3 sm:p-3.5 rounded-2xl border border-stone-200 space-y-2.5">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
           
           {/* Search Box */}
           <div className="relative w-full sm:w-80">
@@ -366,15 +330,15 @@ export default function InventoryManager({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={activeT.inv_searchPlaceholder}
-              className="w-full pl-3 pr-9 py-2 rounded-xl border border-stone-300 focus:outline-hidden focus:border-brand-500 bg-white"
+              className="w-full pl-3 pr-9 py-1.5 rounded-xl border border-stone-300 focus:outline-hidden focus:border-brand-500 bg-white text-xs"
             />
-            <Search className={`w-4 h-4 text-stone-400 absolute ${lang === 'ar' ? 'right-3' : 'left-3'} top-2.5`} />
+            <Search className={`w-3.5 h-3.5 text-stone-400 absolute ${lang === 'ar' ? 'right-3' : 'left-3'} top-2.5`} />
           </div>
 
           {/* Toggle Movements Log Button */}
           <button
             onClick={() => setShowMovementsLog((prev) => !prev)}
-            className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-all text-xs ${
+            className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all text-xs ${
               showMovementsLog
                 ? 'bg-stone-900 text-white'
                 : 'bg-white border border-stone-300 text-stone-700 hover:bg-stone-100'
@@ -391,9 +355,9 @@ export default function InventoryManager({
           <div className="flex flex-wrap items-center gap-1">
             <button
               onClick={() => setCategoryFilter('all')}
-              className={`px-3 py-1 rounded-lg font-bold text-xs transition-colors ${
+              className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-colors ${
                 categoryFilter === 'all'
-                  ? 'bg-brand-600 text-white'
+                  ? 'bg-brand-600 text-white shadow-2xs'
                   : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
               }`}
             >
@@ -409,9 +373,9 @@ export default function InventoryManager({
                 <button
                   key={cat.id}
                   onClick={() => setCategoryFilter(cat.id)}
-                  className={`px-3 py-1 rounded-lg font-bold text-xs transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-colors ${
                     categoryFilter === cat.id
-                      ? 'bg-brand-600 text-white'
+                      ? 'bg-brand-600 text-white shadow-2xs'
                       : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
                   }`}
                 >
@@ -426,7 +390,7 @@ export default function InventoryManager({
             <span className="text-[11px] text-stone-500 font-bold ml-1">{lang === 'en' ? 'Stock Status:' : 'حالة الرصيد:'}</span>
             <button
               onClick={() => setStockStatusFilter('all')}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+              className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
                 stockStatusFilter === 'all' ? 'bg-stone-800 text-white' : 'text-stone-600 hover:bg-stone-200'
               }`}
             >
@@ -434,23 +398,23 @@ export default function InventoryManager({
             </button>
             <button
               onClick={() => setStockStatusFilter('available')}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+              className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
                 stockStatusFilter === 'available' ? 'bg-emerald-600 text-white' : 'text-stone-600 hover:bg-stone-200'
               }`}
             >
-              {lang === 'en' ? 'Available (>5)' : 'متوفر'}
+              {lang === 'en' ? 'Available' : 'متوفر'}
             </button>
             <button
               onClick={() => setStockStatusFilter('low')}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+              className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
                 stockStatusFilter === 'low' ? 'bg-amber-600 text-white' : 'text-stone-600 hover:bg-stone-200'
               }`}
             >
-              {lang === 'en' ? 'Low Stock (<=5)' : 'رصيد حرج'}
+              {lang === 'en' ? 'Low Stock' : 'رصيد حرج'}
             </button>
             <button
               onClick={() => setStockStatusFilter('out')}
-              className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+              className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
                 stockStatusFilter === 'out' ? 'bg-red-600 text-white' : 'text-stone-600 hover:bg-stone-200'
               }`}
             >
@@ -532,48 +496,57 @@ export default function InventoryManager({
         </div>
       )}
 
-      {/* Inventory Products Table */}
-      <div className="border border-stone-200 rounded-2xl overflow-hidden bg-white shadow-xs">
-        <div className="overflow-x-auto">
-          <table className={`w-full ${lang === 'en' ? 'text-left' : 'text-right'} text-xs`}>
-            <thead className="bg-stone-100 text-stone-700 font-black border-b border-stone-200">
+      {/* Inventory Products Table with Sticky Header & Balanced Spacing */}
+      <div className="border border-stone-200 rounded-2xl bg-white shadow-xs overflow-hidden">
+        <div className="overflow-x-auto max-h-[calc(100vh-270px)] overflow-y-auto">
+          <table className={`w-full ${lang === 'en' ? 'text-left' : 'text-right'} text-xs border-collapse`}>
+            <thead className="bg-stone-100/95 backdrop-blur-xs text-stone-700 font-black border-b border-stone-200 sticky top-0 z-20 shadow-2xs">
               <tr>
-                <th className="p-3">#</th>
-                <th className="p-3">{lang === 'en' ? 'Photo' : 'الصورة'}</th>
-                <th className="p-3">{activeT.inv_thDish || (lang === 'en' ? 'Dish Name' : 'اسم الصنف')}</th>
-                <th className="p-3">{activeT.inv_thCategory || (lang === 'en' ? 'Category' : 'القسم')}</th>
-                <th className="p-3">{lang === 'en' ? 'Unit & Weight' : 'الوحدة والوزن'}</th>
-                <th className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'}`}>
-                  <div className="flex flex-col">
-                    <span className="font-black">{lang === 'en' ? 'Prices (Retail / Wholesale)' : 'الأسعار (قطاعي / تجار)'}</span>
-                    <span className="text-[10px] text-stone-400 font-normal">سعر الزبون • سعر التاجر</span>
+                <th className="py-2.5 px-3 text-center w-12">#</th>
+                <th className="py-2.5 px-3 text-center w-14">{lang === 'en' ? 'Photo' : 'الصورة'}</th>
+                <th className="py-2.5 px-3 min-w-[170px]">{activeT.inv_thDish || (lang === 'en' ? 'Dish Name' : 'اسم الصنف')}</th>
+                <th className="py-2.5 px-3 text-center w-24">{activeT.inv_thCategory || (lang === 'en' ? 'Category' : 'القسم')}</th>
+                <th className="py-2.5 px-3 text-center w-28">{lang === 'en' ? 'Unit & Weight' : 'الوحدة والوزن'}</th>
+                <th className="py-2.5 px-3 text-center min-w-[130px]">
+                  <div className="flex flex-col items-center">
+                    <span className="font-black">{lang === 'en' ? 'Prices' : 'الأسعار'}</span>
+                    <span className="text-[10px] text-stone-400 font-normal">قطاعي • تجار</span>
                   </div>
                 </th>
-                <th className="p-3 text-center">{activeT.inv_thStock || (lang === 'en' ? 'In Stock' : 'الرصيد المتاح')}</th>
-                <th className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'}`}>{activeT.inv_thTotalVal || (lang === 'en' ? 'Stock Value' : 'قيمة المخزون')}</th>
-                <th className="p-3 text-center">{activeT.inv_thStatus || (lang === 'en' ? 'Status' : 'الحالة')}</th>
-                <th className="p-3 text-center">{lang === 'en' ? 'Quantity Adjust' : 'تعديل الكمية'}</th>
-                <th className="p-3 text-center">{lang === 'en' ? 'Full Edit' : 'تحكم شامل'}</th>
+                <th className="py-2.5 px-3 text-center w-28">{activeT.inv_thStock || (lang === 'en' ? 'In Stock' : 'الرصيد المتاح')}</th>
+                <th className="py-2.5 px-3 text-center w-28">{activeT.inv_thTotalVal || (lang === 'en' ? 'Stock Value' : 'قيمة المخزون')}</th>
+                <th className="py-2.5 px-3 text-center w-28">{activeT.inv_thStatus || (lang === 'en' ? 'Status' : 'الحالة')}</th>
+                <th className="py-2.5 px-3 text-center min-w-[145px]">{lang === 'en' ? 'Quantity Adjust' : 'تعديل الكمية'}</th>
+                <th className="py-2.5 px-3 text-center w-28">{lang === 'en' ? 'Full Edit' : 'تحكم شامل'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {filteredProducts.map((product, idx) => {
                 const qty = inventory[product.id] || 0;
                 const value = qty * product.price;
+                const catInfo = CATEGORY_NAMES[product.category] || { 
+                  nameAr: product.category, 
+                  nameEn: product.category, 
+                  color: 'bg-stone-100 text-stone-700 border-stone-200' 
+                };
+                const catLabel = lang === 'en' ? catInfo.nameEn : catInfo.nameAr;
+                const wholesalePrice = product.wholesalePrice !== undefined && product.wholesalePrice !== null && Number(product.wholesalePrice) > 0
+                  ? Number(product.wholesalePrice)
+                  : Math.round(product.price * (1 - (wholesaleDiscountPct || 15) / 100));
 
                 return (
-                  <tr key={product.id} className="hover:bg-stone-50/70 transition-colors">
-                    <td className="p-3 text-stone-400 font-mono">{idx + 1}</td>
+                  <tr key={product.id} className="hover:bg-stone-50/80 transition-colors">
+                    <td className="py-2.5 px-3 text-center text-stone-400 font-mono text-xs">{idx + 1}</td>
                     
-                    {/* Photo Thumbnail with click to open full editor */}
-                    <td className="p-3">
+                    {/* Photo Thumbnail */}
+                    <td className="py-2.5 px-3 text-center">
                       <button
                         type="button"
                         onClick={() => {
                           setEditingProduct(product);
                           setIsEditModalOpen(true);
                         }}
-                        className="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0 hover:ring-2 hover:ring-brand-400 transition-all relative group"
+                        className="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0 hover:ring-2 hover:ring-brand-400 transition-all relative group mx-auto"
                         title={lang === 'en' ? 'Click to change photo and details' : 'اضغط لتغيير الصورة وبيانات الصنف'}
                       >
                         {product.image ? (
@@ -595,42 +568,42 @@ export default function InventoryManager({
                     </td>
 
                     {/* Dish Name */}
-                    <td className="p-3">
+                    <td className="py-2.5 px-3">
                       <button
                         type="button"
                         onClick={() => {
                           setEditingProduct(product);
                           setIsEditModalOpen(true);
                         }}
-                        className="text-start font-extrabold text-stone-900 block text-sm hover:text-brand-600 transition-colors"
+                        className="text-start font-black text-stone-900 block text-xs sm:text-sm hover:text-brand-600 transition-colors leading-tight"
                         title="اضغط لتعديل الاسم والسعر والصورة"
                       >
                         {product.name}
                       </button>
                       {product.isFasting && (
-                        <span className="inline-block mt-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 rounded">
-                          {lang === 'en' ? '🌱 Vegan / Fasting' : '🌱 نباتي / صيامي'}
+                        <span className="inline-block mt-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                          {lang === 'en' ? '🌱 Vegan' : '🌱 نباتي / صيامي'}
                         </span>
                       )}
                     </td>
 
                     {/* Category */}
-                    <td className="p-3">
-                      <span className="text-[11px] font-bold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full whitespace-nowrap">
-                        {product.category}
+                    <td className="py-2.5 px-3 text-center">
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap inline-block ${catInfo.color}`}>
+                        {catLabel}
                       </span>
                     </td>
 
                     {/* Unit & Weight */}
-                    <td className="p-3 text-stone-600">
-                      <span>{product.unit}</span>
-                      <span className="text-[10px] text-stone-400 block font-mono">({product.weightKg} {activeT.kg})</span>
+                    <td className="py-2.5 px-3 text-center text-stone-600">
+                      <span className="font-bold text-xs block text-stone-800">{product.unit}</span>
+                      <span className="text-[10px] text-stone-400 font-mono block">({product.weightKg} {activeT.kg})</span>
                     </td>
 
                     {/* Dual Prices (Retail & Wholesale) */}
-                    <td className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'}`}>
+                    <td className="py-2.5 px-3 text-center">
                       {inlinePriceId === product.id ? (
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-center gap-1">
                           <input
                             type="number"
                             autoFocus
@@ -640,7 +613,7 @@ export default function InventoryManager({
                               if (e.key === 'Enter') handleSaveInlinePrice(product);
                               if (e.key === 'Escape') setInlinePriceId(null);
                             }}
-                            className="w-16 p-1 text-xs font-mono font-bold border border-brand-500 rounded bg-white shadow-inner focus:outline-hidden"
+                            className="w-16 p-1 text-xs font-mono font-bold border border-brand-500 rounded bg-white shadow-inner focus:outline-hidden text-center"
                           />
                           <button
                             type="button"
@@ -660,14 +633,14 @@ export default function InventoryManager({
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-1">
+                        <div className="flex flex-col items-center gap-1">
                           {/* Retail Price */}
                           <div
                             onClick={() => handleStartInlinePrice(product)}
-                            className="flex items-center gap-1 font-mono font-black text-xs text-stone-900 hover:text-brand-600 cursor-pointer p-0.5 rounded transition-all group"
+                            className="flex items-center justify-center gap-1 font-mono font-black text-xs text-stone-900 hover:text-brand-600 cursor-pointer px-1.5 py-0.5 rounded transition-all bg-stone-100 border border-stone-200 group w-full max-w-[110px]"
                             title="اضغط لتعديل السعر العادي مباشرة"
                           >
-                            <span className="text-[10px] text-stone-500 font-sans font-bold">قطاعي:</span>
+                            <span className="text-[9px] text-stone-500 font-sans font-bold">قطاعي:</span>
                             <span>{product.price} {activeT.currency}</span>
                             <Edit3 className="w-2.5 h-2.5 text-stone-400 group-hover:text-brand-600 opacity-40 group-hover:opacity-100 transition-opacity" />
                           </div>
@@ -678,24 +651,20 @@ export default function InventoryManager({
                               setEditingProduct(product);
                               setIsEditModalOpen(true);
                             }}
-                            className="flex items-center gap-1 font-mono font-black text-[11px] text-amber-800 hover:text-amber-950 cursor-pointer p-0.5 rounded transition-all"
+                            className="flex items-center justify-center gap-1 font-mono font-black text-xs text-amber-900 hover:text-amber-950 cursor-pointer px-1.5 py-0.5 rounded transition-all bg-amber-50 border border-amber-200 w-full max-w-[110px]"
                             title="اضغط لتعديل سعر التجار في شاشة التحكم"
                           >
-                            <span className="text-[10px] text-amber-700 font-sans font-bold">تجار:</span>
-                            <span className="bg-amber-100 text-amber-900 px-1 rounded border border-amber-200">
-                              {product.wholesalePrice !== undefined && product.wholesalePrice !== null && Number(product.wholesalePrice) > 0
-                                ? Number(product.wholesalePrice)
-                                : Math.round(product.price * (1 - (wholesaleDiscountPct || 15) / 100))} {activeT.currency}
-                            </span>
+                            <span className="text-[9px] text-amber-700 font-sans font-bold">تجار:</span>
+                            <span>{wholesalePrice} {activeT.currency}</span>
                           </div>
                         </div>
                       )}
                     </td>
 
                     {/* Current Stock */}
-                    <td className="p-3 text-center">
+                    <td className="py-2.5 px-3 text-center">
                       <span
-                        className={`inline-block font-mono font-black text-sm px-2.5 py-1 rounded-xl ${
+                        className={`inline-block font-mono font-black text-xs px-2.5 py-1 rounded-xl ${
                           qty === 0
                             ? 'bg-red-100 text-red-700 border border-red-200'
                             : qty <= 5
@@ -708,51 +677,51 @@ export default function InventoryManager({
                     </td>
 
                     {/* Stock Valuation */}
-                    <td className={`p-3 ${lang === 'en' ? 'text-right' : 'text-left'} font-mono font-bold text-stone-900`}>
+                    <td className="py-2.5 px-3 text-center font-mono font-bold text-stone-900 text-xs">
                       {value.toLocaleString()} {activeT.currency}
                     </td>
 
                     {/* Status Badge */}
-                    <td className="p-3 text-center">
+                    <td className="py-2.5 px-3 text-center">
                       {qty === 0 ? (
-                        <span className="text-red-600 font-black text-[11px] bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                        <span className="text-red-600 font-bold text-[11px] bg-red-50 px-2 py-0.5 rounded-full border border-red-200 whitespace-nowrap inline-block">
                           {lang === 'en' ? '🔴 Out of Stock' : '🔴 نفد من المخزن'}
                         </span>
                       ) : qty <= 5 ? (
-                        <span className="text-amber-700 font-black text-[11px] bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                        <span className="text-amber-700 font-bold text-[11px] bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 whitespace-nowrap inline-block">
                           {lang === 'en' ? '⚠️ Low Stock' : '⚠️ رصيد حرج'}
                         </span>
                       ) : (
-                        <span className="text-emerald-700 font-black text-[11px] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        <span className="text-emerald-700 font-bold text-[11px] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap inline-block">
                           {lang === 'en' ? '✅ Available' : '✅ متوفر'}
                         </span>
                       )}
                     </td>
 
                     {/* Quick Quantity Adjust Buttons (+1, -1, +5, جرد) */}
-                    <td className="p-3 text-center">
+                    <td className="py-2.5 px-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => handleQuickAdjust(product.id, -1)}
                           title={lang === 'en' ? 'Deduct 1' : 'خصم 1'}
                           disabled={qty === 0}
-                          className="w-6 h-6 rounded bg-stone-100 hover:bg-stone-200 disabled:opacity-30 text-stone-700 font-bold flex items-center justify-center text-xs"
+                          className="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 disabled:opacity-30 text-stone-700 font-bold flex items-center justify-center text-xs border border-stone-200 transition-colors"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
 
                         <button
                           onClick={() => handleQuickAdjust(product.id, 1)}
                           title={lang === 'en' ? 'Add 1' : 'إضافة 1'}
-                          className="w-6 h-6 rounded bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-xs"
+                          className="w-7 h-7 rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-xs border border-brand-200 transition-colors"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
 
                         <button
                           onClick={() => handleQuickAdjust(product.id, 5)}
                           title={lang === 'en' ? 'Add 5' : 'إضافة 5'}
-                          className="px-1.5 h-6 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-[10px]"
+                          className="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-[10px] border border-emerald-200 transition-colors"
                         >
                           +5
                         </button>
@@ -763,15 +732,15 @@ export default function InventoryManager({
                             setAdjustQty(String(qty));
                           }}
                           title={lang === 'en' ? 'Detailed Stock Audit' : 'جرد دقيق وتعديل'}
-                          className="w-6 h-6 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center text-xs"
+                          className="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center text-xs border border-stone-200 transition-colors"
                         >
-                          <SlidersHorizontal className="w-3 h-3" />
+                          <SlidersHorizontal className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
 
                     {/* Comprehensive Product Edit Button (Name, Price, Image, Description) */}
-                    <td className="p-3 text-center">
+                    <td className="py-2.5 px-3 text-center">
                       <button
                         type="button"
                         onClick={() => {
@@ -779,10 +748,10 @@ export default function InventoryManager({
                           setIsEditModalOpen(true);
                         }}
                         title={lang === 'en' ? 'Edit name, price, photo, description' : 'تحكم كامل: تعديل الاسم والسعر والصورة والوصف'}
-                        className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold flex items-center justify-center gap-1 text-[11px] transition-all shadow-2xs"
+                        className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold flex items-center justify-center gap-1 text-[11px] transition-all shadow-2xs mx-auto"
                       >
                         <Edit3 className="w-3 h-3 text-amber-700" />
-                        <span>{lang === 'en' ? 'Edit Dish' : 'تعديل شامل'}</span>
+                        <span>{lang === 'en' ? 'Edit' : 'تعديل شامل'}</span>
                       </button>
                     </td>
 
